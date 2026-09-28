@@ -2,6 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    { "source": "/terms", "destination": "/balanjo/terms.html" },
+    { "source": "/terms.html", "destination": "/balanjo/terms.html" },
+    { "source": "/privacy", "destination": "/balanjo/privacy.html" },
+    { "source": "/privacy.html", "destination": "/balanjo/privacy.html" },
+    { "source": "/syarat-ketentuan", "destination": "/balanjo/terms.html" },
+    { "source": "/kebijakan-privasi", "destination": "/balanjo/privacy.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
