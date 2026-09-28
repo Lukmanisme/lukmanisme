@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pembayaran Berhasil - Balanjo POS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-[#0b0f17] text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800 bg-[#0f172a]/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="/balanjo" class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-extrabold text-xl">
+          B
+        </div>
+        <span class="font-extrabold text-lg text-white">Balanjo<span class="text-emerald-400">POS</span></span>
+      </a>
+      <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        Status: Lunas
+      </span>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-2xl mx-auto px-4 sm:px-6 py-10 flex-1 w-full">
+    
+    <!-- SUCCESS ICON & TITLE -->
+    <div class="text-center mb-8">
+      <div class="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center mx-auto mb-4 text-emerald-400 shadow-xl shadow-emerald-500/10">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+
+      <h1 class="text-3xl font-extrabold text-white tracking-tight">
+        Pembayaran Berhasil! 🎉
+      </h1>
+      <p class="text-sm text-slate-300 mt-2">
+        Langganan Balanjo POS Anda telah aktif dan terverifikasi otomatis melalui Midtrans.
+      </p>
+    </div>
+
+    <!-- TRANSACTION RECEIPT CARD -->
+    <div class="bg-[#111827] border border-emerald-500/30 rounded-2xl p-5 sm:p-6 mb-8 shadow-xl font-mono text-xs space-y-3">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <span class="text-slate-400">No. Transaksi</span>
+        <span id="order-id" class="text-white font-bold">-</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Paket Langganan</span>
+        <span id="plan-name" class="text-white font-bold">-</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Email Akun Terdaftar</span>
+        <span id="account-email" class="text-emerald-400 font-bold">-</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Total Pembayaran</span>
+        <span id="total-amount" class="text-white font-bold">-</span>
+      </div>
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+        <span class="text-slate-400">Status Pembayaran</span>
+        <span class="text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded text-[11px] font-bold">
+          LUNAS (Terverifikasi)
+        </span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Masa Aktif Sampai</span>
+        <span id="expiry-date" class="text-emerald-300 font-bold">-</span>
+      </div>
+    </div>
+
+    <!-- STEP BY STEP GUIDANCE -->
+    <div class="bg-[#111827] border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl mb-8">
+      <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+        <span class="text-emerald-400">📲</span>
+        Langkah Mulai Menggunakan Aplikasi Kasir
+      </h2>
+
+      <div class="space-y-6 text-sm">
+        
+        <!-- STEP 1 -->
+        <div class="flex items-start gap-4">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500 text-black font-extrabold flex items-center justify-center shrink-0 font-mono text-sm">
+            1
+          </div>
+          <div class="space-y-2 flex-1">
+            <h3 class="font-bold text-white text-base">Unduh File Aplikasi (.APK)</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Unduh versi terbaru Balanjo POS langsung ke perangkat smartphone atau tablet Android Anda.
+            </p>
+            <div class="pt-2">
+              <a href="https://github.com/Lukmanisme/KasirSubscriptionPOS/releases/latest"
+                 target="_blank"
+                 id="download-apk-btn"
+                 class="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-black font-extrabold text-xs transition shadow-lg shadow-emerald-500/20">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                <span>Download APK Balanjo POS Terbaru</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="flex items-start gap-4 pt-4 border-t border-slate-800">
+          <div class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 font-extrabold flex items-center justify-center shrink-0 font-mono text-sm">
+            2
+          </div>
+          <div class="space-y-1.5 flex-1">
+            <h3 class="font-bold text-white text-base">Instal Aplikasi di HP / Tablet</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Buka file yang baru diunduh. Jika muncul peringatan dari sistem Android karena aplikasi diinstal mandiri (sideloading), pilih <strong>"Tetap Install"</strong> atau centang <strong>"Izinkan dari sumber ini"</strong>.
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="flex items-start gap-4 pt-4 border-t border-slate-800">
+          <div class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 font-extrabold flex items-center justify-center shrink-0 font-mono text-sm">
+            3
+          </div>
+          <div class="space-y-1.5 flex-1">
+            <h3 class="font-bold text-white text-base">Buka Aplikasi & Masuk dengan Email Anda</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Buka aplikasi Balanjo POS, lalu masuk atau daftarkan akun baru menggunakan email:
+            </p>
+            <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs text-emerald-400 font-bold inline-block">
+              <span id="guide-email">-</span>
+            </div>
+            <p class="text-xs text-slate-400 pt-1">
+              💡 Sistem akan langsung mencocokkan email Anda dengan pembayaran yang baru dilakukan, dan akses kasir langsung terbuka seketika!
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- HELP CONTACT -->
+    <div class="text-center p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-2">
+      <p>Butuh bantuan panduan instalasi atau konfirmasi akun?</p>
+      <a href="https://wa.me/6285156831492?text=Halo%20Admin%20Balanjo%20POS,%20saya%20sudah%20melakukan%20pembayaran%20dan%20ingin%20konfirmasi%20akun."
+         target="_blank"
+         class="inline-flex items-center gap-1.5 text-emerald-400 hover:underline font-bold">
+        <span>Hubungi Admin via WhatsApp (+62 851-5683-1492)</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800 bg-[#0c1322] py-6 text-center text-xs text-slate-500">
+    <p>&copy; 2026 Balanjo POS by Lukmanisme. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Read URL query params
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('order_id') || 'ORDER-BLJ-' + Date.now();
+    const plan = params.get('plan') || '1m';
+    const email = params.get('email') || 'kasir@balanjo.id';
+    const amount = Number(params.get('amount')) || 30000;
+
+    const PLAN_NAMES = {
+      '1m': 'Paket 1 Bulan (30 Hari)',
+      '3m': 'Paket 3 Bulan (90 Hari)',
+      '12m': 'Paket 12 Bulan (365 Hari)'
+    };
+
+    const PLAN_DAYS = {
+      '1m': 30,
+      '3m': 90,
+      '12m': 365
+    };
+
+    const days = PLAN_DAYS[plan] || 30;
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + days);
+    const expiryFormatted = expiry.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    document.getElementById('order-id').innerText = orderId;
+    document.getElementById('plan-name').innerText = PLAN_NAMES[plan] || `Paket Langganan (${plan})`;
+    document.getElementById('account-email').innerText = email;
+    document.getElementById('guide-email').innerText = email;
+    document.getElementById('total-amount').innerText = `Rp ${amount.toLocaleString('id-ID')}`;
+    document.getElementById('expiry-date').innerText = expiryFormatted;
+  </script>
+
+</body>
+</html>

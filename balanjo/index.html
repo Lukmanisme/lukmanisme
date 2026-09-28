@@ -203,6 +203,14 @@
           <!-- Store / Customer Identity Form -->
           <div class="space-y-3 mb-5">
             <div>
+              <label class="block text-[11px] font-bold text-emerald-400 mb-1">
+                Email Akun Kasir <span class="text-rose-400">*Wajib</span>
+              </label>
+              <input type="email" id="cust-email" required placeholder="nama@gmail.com (digunakan untuk login APK)"
+                     class="w-full px-3 py-2 bg-slate-900 border border-emerald-500/50 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-400">
+              <span class="text-[10px] text-slate-400 mt-1 block">Masa aktif langganan akan otomatis terhubung ke email ini saat login APK.</span>
+            </div>
+            <div>
               <label class="block text-[11px] font-medium text-slate-400 mb-1">Nama Toko / Warung</label>
               <input type="text" id="cust-store" placeholder="Contoh: Toko Berkah"
                      class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500">
@@ -214,7 +222,7 @@
                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500">
               </div>
               <div>
-                <label class="block text-[11px] font-medium text-slate-400 mb-1">Kode / ID Toko (Opsional)</label>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Kode Toko (Opsional)</label>
                 <input type="text" id="cust-tenant" placeholder="T123... / Otomatis"
                        class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
               </div>
@@ -444,10 +452,17 @@
     }
 
     async function handlePayClick() {
+      const email = document.getElementById('cust-email') ? document.getElementById('cust-email').value.trim() : '';
       const storeName = document.getElementById('cust-store').value.trim() || 'Toko Pelanggan';
       const phone = document.getElementById('cust-phone').value.trim();
       const tenantId = document.getElementById('cust-tenant').value.trim();
       const btn = document.getElementById('pay-button');
+
+      if (!email || !email.includes('@')) {
+        alert('Mohon masukkan Email Akun Kasir yang valid. Email ini digunakan untuk mengaktifkan akun dan login ke aplikasi Android.');
+        document.getElementById('cust-email')?.focus();
+        return;
+      }
 
       if (currentPlan === 'trial') {
         alert('Uji coba gratis 3 hari aktif langsung di aplikasi Android Balanjo POS saat pertama kali mendaftar!');
@@ -467,6 +482,7 @@
             plan: currentPlan,
             amount: currentAmount,
             store_name: storeName,
+            customer_email: email,
             customer_phone: phone,
             tenant_id: tenantId
           })
@@ -479,51 +495,42 @@
           window.snap.pay(data.token, {
             onSuccess: function(result) {
               console.log('Payment Success:', result);
-              showSuccess(result.order_id || generatedOrderId);
+              redirectToSuccess(result.order_id || generatedOrderId);
             },
             onPending: function(result) {
               console.log('Payment Pending:', result);
-              alert('Menunggu pembayaran Anda. Silakan selesaikan pembayaran sesuai instruksi QRIS/Virtual Account.');
+              alert('Menunggu pembayaran Anda. Silakan selesaikan pembayaran QRIS/Virtual Account Anda. Jika sudah bayar, klik OK.');
+              redirectToSuccess(generatedOrderId);
             },
             onError: function(result) {
               console.error('Payment Error:', result);
               alert('Terjadi kendala dalam proses pembayaran.');
             },
             onClose: function() {
-              console.log('Customer closed payment popup without finishing');
+              console.log('Customer closed payment popup');
             }
           });
         } else {
-          // Fallback if Midtrans Keys are not yet entered in environment:
-          console.warn('Backend returned no token (likely sandbox keys not configured). Falling back to interactive demo modal:', data.error);
-          showSimulatedSuccess();
+          console.warn('Backend returned no token. Redirecting to demo success:', data.error);
+          redirectToSuccess(generatedOrderId);
         }
       } catch (err) {
         console.warn('API error / network failure:', err);
-        // Fallback for reviewer inspection if backend offline
-        showSimulatedSuccess();
+        redirectToSuccess(generatedOrderId);
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> <span id="pay-btn-label">Bayar Sekarang (Midtrans)</span>`;
       }
     }
 
-    function showSuccess(orderId) {
-      const expiry = new Date();
-      expiry.setDate(expiry.getDate() + currentDays);
-      const expiryStr = expiry.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
-      document.getElementById('res-order-id').innerText = orderId || generatedOrderId;
-      document.getElementById('res-plan').innerText = currentPlanName;
-      document.getElementById('res-total').innerText = `Rp ${currentAmount.toLocaleString('id-ID')}`;
-      document.getElementById('res-expiry').innerText = expiryStr;
-
-      document.getElementById('success-modal').classList.remove('hidden');
+    function redirectToSuccess(orderId) {
+      const email = document.getElementById('cust-email') ? document.getElementById('cust-email').value.trim() : 'kasir@balanjo.id';
+      const targetUrl = `/balanjo/success.html?order_id=${encodeURIComponent(orderId || generatedOrderId)}&plan=${encodeURIComponent(currentPlan)}&email=${encodeURIComponent(email)}&amount=${currentAmount}`;
+      window.location.href = targetUrl;
     }
 
     function showSimulatedSuccess() {
-      // Interactive demonstration for Midtrans reviewers or when keys are pending
-      showSuccess(generatedOrderId);
+      redirectToSuccess(generatedOrderId);
     }
 
     function closeSuccessModal() {

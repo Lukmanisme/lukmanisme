@@ -109,8 +109,28 @@ export default async function handler(req, res) {
 
     let tenantId = custom_field1;
     let plan = custom_field2 || '1m';
+    const customerEmail = custom_field3 || (notification.customer_details && notification.customer_details.email) || '';
 
-    // If tenantId was not in custom_field1, attempt lookup from payment_requests
+    // If tenantId was not in custom_field1, attempt lookup from profiles by email!
+    if (!tenantId && customerEmail) {
+      try {
+        const profRes = await fetch(
+          `${supabaseUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(customerEmail)}&select=id,tenant_id,name&limit=1`,
+          { headers }
+        );
+        if (profRes.ok) {
+          const profData = await profRes.json();
+          if (profData && profData.length > 0 && profData[0].tenant_id) {
+            tenantId = profData[0].tenant_id;
+            console.log(`[Midtrans Webhook] Linked tenant ${tenantId} via profile email ${customerEmail}`);
+          }
+        }
+      } catch (profErr) {
+        console.warn('Error querying profile by email:', profErr.message);
+      }
+    }
+
+    // Fallback: lookup from payment_requests by order_id
     if (!tenantId) {
       try {
         const prRes = await fetch(
@@ -126,6 +146,36 @@ export default async function handler(req, res) {
         }
       } catch (findErr) {
         console.warn('Error querying payment_requests for order:', findErr.message);
+      }
+    }
+
+    // If user paid on web before creating an account, pre-create tenant so it is ready upon signup!
+    if (!tenantId && customerEmail && isPaid) {
+      try {
+        const newTenantId = crypto.randomUUID();
+        const tenantCode = 'T' + newTenantId.replace(/-/g, '').substring(0, 9).toUpperCase();
+        const storeName = notification.customer_details?.first_name || customerEmail.split('@')[0];
+
+        const tRes = await fetch(`${supabaseUrl}/rest/v1/tenants`, {
+          method: 'POST',
+          headers: { ...headers, Prefer: 'return=minimal' },
+          body: JSON.stringify({
+            id: newTenantId,
+            code: tenantCode,
+            name: storeName,
+            owner_name: storeName,
+            owner_phone: notification.customer_details?.phone || '',
+            admin_wa: customerEmail,
+            is_active: true
+          })
+        });
+
+        if (tRes.ok) {
+          tenantId = newTenantId;
+          console.log(`[Midtrans Webhook] Auto-created tenant ${tenantId} (${tenantCode}) for email ${customerEmail}`);
+        }
+      } catch (tErr) {
+        console.warn('Error auto-creating tenant for email:', tErr.message);
       }
     }
 

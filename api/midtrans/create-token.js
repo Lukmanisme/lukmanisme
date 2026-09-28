@@ -89,7 +89,7 @@ export default async function handler(req, res) {
       // Pass metadata through custom fields for webhook matching
       custom_field1: tenant_id || '',
       custom_field2: plan,
-      custom_field3: store_name || ''
+      custom_field3: customer_email || ''
     };
 
     const midtransRes = await fetch(snapEndpoint, {
