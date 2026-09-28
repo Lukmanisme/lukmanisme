@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kebijakan Privasi - Balanjo POS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-[#0b0f17] text-slate-200 min-h-screen flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-[#0f172a]/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="/balanjo" class="flex items-center gap-3 text-white font-bold text-lg hover:opacity-90 transition">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-extrabold text-xl">
+          B
+        </div>
+        <span>Balanjo<span class="text-emerald-400">POS</span></span>
+      </a>
+      <a href="/balanjo" class="text-xs text-slate-400 hover:text-emerald-400 transition flex items-center gap-1 font-mono">
+        &larr; Kembali ke Beranda
+      </a>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-12 flex-1">
+    <div class="bg-[#131d31] border border-slate-800 rounded-2xl p-6 sm:p-10 shadow-xl">
+      <div class="inline-block px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-4">
+        Dokumen Resmi &bull; Terakhir Diperbarui: 28 September 2026
+      </div>
+
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white mb-6">
+        Kebijakan Privasi (Privacy Policy)
+      </h1>
+
+      <p class="text-sm text-slate-300 leading-relaxed mb-6">
+        Kebijakan Privasi ini menjelaskan bagaimana <strong>Balanjo POS</strong> dan <strong>Lukmanisme POS Studio</strong> mengumpulkan, menggunakan, menyimpan, dan melindungi informasi pribadi pengguna saat menggunakan aplikasi kasir Android kami serta portal perpanjangan langganan ini.
+      </p>
+
+      <div class="space-y-6 text-sm text-slate-300 leading-relaxed">
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">1.</span> Informasi yang Kami Kumpulkan
+          </h2>
+          <ul class="list-disc pl-5 space-y-1.5 text-slate-300">
+            <li><strong>Informasi Pendaftaran Akun:</strong> Nama pemilik toko, nama warung/usaha, nomor telepon/WhatsApp, dan alamat email untuk keperluan otentikasi akun di Supabase Auth.</li>
+            <li><strong>Identitas Perangkat:</strong> Fingerprint perangkat Android yang telah di-hash secara satu arah (one-way cryptographic hash) untuk mencegah penyalahgunaan fitur Free Trial berganda.</li>
+            <li><strong>Data Transaksi Kasir Lokal:</strong> Disimpan secara mandiri di penyimpanan internal ponsel pengguna (database SQLite) dan tidak dipublikasikan ke pihak ketiga.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">2.</span> Pemrosesan Data Pembayaran (Midtrans)
+          </h2>
+          <p>
+            Ketika Anda melakukan perpanjangan langganan via payment gateway Midtrans:
+          </p>
+          <ul class="list-disc pl-5 space-y-1.5 mt-2">
+            <li>Kami meneruskan informasi pesanan (Nomor Order, Nama Toko, Jumlah Pembayaran, Nomor Kontak) ke sistem <strong>Midtrans (PT Midtrans)</strong> untuk pembuatan token transaksi QRIS atau Virtual Account.</li>
+            <li>Seluruh proses transaksi pembayaran tunduk pada standar keamanan industri <strong>PCI-DSS Compliance</strong> tingkat tertinggi yang dikelola langsung oleh Midtrans.</li>
+            <li>Kami tidak mengumpulkan, tidak melihat, dan tidak menyimpan data sensitif seperti nomor kartu debit/kredit, PIN perbankan, maupun CVV.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">3.</span> Penggunaan Informasi
+          </h2>
+          <p>
+            Data yang kami kumpulkan hanya digunakan secara eksklusif untuk:
+          </p>
+          <ul class="list-disc pl-5 space-y-1.5 mt-2">
+            <li>Memverifikasi identitas pengguna dan status hak akses langganan aktif.</li>
+            <li>Memproses verifikasi otomatis status perpanjangan akun melalui webhook resmi Midtrans.</li>
+            <li>Mengirimkan informasi teknis penting terkait pembaruan versi APK kasir atau masa kedaluwarsa langganan.</li>
+            <li>Memberikan bantuan dan konsultasi melalui layanan dukungan WhatsApp resmi.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">4.</span> Keamanan Data
+          </h2>
+          <p>
+            Kami menerapkan enkripsi standar industri (SSL/TLS HTTPS) pada seluruh transmisi data jaringan antara aplikasi Android, server Vercel, database Supabase, dan gateway Midtrans. Basis data cloud dilindungi oleh mekanisme <strong>Row Level Security (RLS)</strong> yang ketat, memastikan setiap tenant hanya dapat mengakses data miliknya sendiri.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">5.</span> Kontak Pengelola Data
+          </h2>
+          <p>
+            Jika Anda memiliki pertanyaan mengenai privasi data atau ingin memperbarui informasi akun Anda, silakan hubungi kami di:
+          </p>
+          <div class="mt-3 p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1 font-mono text-xs text-slate-300">
+            <p><strong>Pengelola:</strong> Lukmanisme POS Studio</p>
+            <p><strong>WhatsApp Support:</strong> +62 851-5683-1492</p>
+            <p><strong>Email:</strong> privacy@lukmanisme.my.id</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-[#0c1322] py-6 text-center text-xs text-slate-500">
+    <p>&copy; 2026 Balanjo POS by Lukmanisme. Seluruh hak cipta dilindungi undang-undang.</p>
+  </footer>
+
+</body>
+</html>

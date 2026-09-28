@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Syarat dan Ketentuan Layanan - Balanjo POS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-[#0b0f17] text-slate-200 min-h-screen flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-[#0f172a]/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="/balanjo" class="flex items-center gap-3 text-white font-bold text-lg hover:opacity-90 transition">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-extrabold text-xl">
+          B
+        </div>
+        <span>Balanjo<span class="text-emerald-400">POS</span></span>
+      </a>
+      <a href="/balanjo" class="text-xs text-slate-400 hover:text-emerald-400 transition flex items-center gap-1 font-mono">
+        &larr; Kembali ke Beranda
+      </a>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-12 flex-1">
+    <div class="bg-[#131d31] border border-slate-800 rounded-2xl p-6 sm:p-10 shadow-xl">
+      <div class="inline-block px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-4">
+        Dokumen Resmi &bull; Terakhir Diperbarui: 28 September 2026
+      </div>
+
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white mb-6">
+        Ketentuan dan Syarat Layanan (Terms of Service)
+      </h1>
+
+      <p class="text-sm text-slate-300 leading-relaxed mb-6">
+        Selamat datang di <strong>Balanjo POS</strong>. Layanan ini dikembangkan dan dikelola oleh <strong>Lukmanisme POS Studio</strong>. Dengan mengunduh aplikasi, mengakses portal ini, atau melakukan pembayaran langganan, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh ketentuan di bawah ini.
+      </p>
+
+      <div class="space-y-6 text-sm text-slate-300 leading-relaxed">
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">1.</span> Definisi Layanan
+          </h2>
+          <p>
+            Balanjo POS adalah aplikasi kasir point-of-sales (POS) berbasis sistem operasi Android yang dirancang khusus untuk pelaku usaha mikro, kecil, dan menengah (UMKM) seperti warung makan, kedai kopi, laundry, dan toko ritel. Layanan ini mencakup pencatatan transaksi kasir, manajemen katalog produk/menu, cetak struk via printer thermal Bluetooth, dan sinkronisasi status masa aktif akun langganan cloud.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">2.</span> Model Langganan & Masa Aktif (Subscription)
+          </h2>
+          <ul class="list-disc pl-5 space-y-1.5 text-slate-300">
+            <li><strong>Uji Coba Gratis (Free Trial):</strong> Diberikan selama 3 (tiga) hari sejak pendaftaran pertama per perangkat/toko tanpa pungutan biaya.</li>
+            <li><strong>Paket Berbayar:</strong> Tersedia paket 1 Bulan (30 hari), 3 Bulan (90 hari), dan 12 Bulan (365 hari).</li>
+            <li><strong>Perpanjangan Mandiri:</strong> Pengguna dapat memperpanjang masa aktif kapan saja secara mandiri baik langsung melalui aplikasi kasir maupun portal web resmi Balanjo POS.</li>
+            <li><strong>Masa Berlaku Akumulatif:</strong> Apabila perpanjangan dilakukan sebelum masa langganan sebelumnya berakhir, sisa hari aktif akan ditambahkan secara kumulatif dengan paket baru yang dibeli.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">3.</span> Pembayaran & Payment Gateway (Midtrans)
+          </h2>
+          <p class="mb-2">
+            Seluruh transaksi pembayaran perpanjangan langganan elektronik di Balanjo POS diproses secara resmi dan aman melalui gerbang pembayaran berlisensi Bank Indonesia, <strong>PT Midtrans (Midtrans Payment Gateway)</strong>.
+          </p>
+          <ul class="list-disc pl-5 space-y-1.5">
+            <li>Metode pembayaran mencakup <strong>QRIS Dinamis</strong> (GoPay, OVO, Dana, ShopeePay, BCA/Mandiri Mobile, LinkAja) serta <strong>Virtual Account Bank</strong> resmi.</li>
+            <li>Aktivasi langganan diproses secara instan (real-time) melalui verifikasi otomatis webhook begitu dana diterima oleh sistem Midtrans.</li>
+            <li>Balanjo POS tidak menyimpan data nomor kartu kredit/debit atau kredensial perbankan rahasia pengguna di server internal kami.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">4.</span> Kebijakan Pengembalian Dana (Refund Policy)
+          </h2>
+          <p>
+            Mengingat Balanjo POS menyediakan masa uji coba gratis (Free Trial 3 Hari) untuk menguji seluruh fungsi sebelum membeli paket langganan, biaya langganan yang telah dibayarkan bersifat <strong>final dan non-refundable (tidak dapat dikembalikan)</strong>, kecuali apabila terjadi kegagalan teknis sistem yang menyebabkan status perpanjangan gagal diaktifkan setelah konfirmasi transfer resmi diverifikasi.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">5.</span> Toleransi Offline & Keamanan Data
+          </h2>
+          <p>
+            Aplikasi Balanjo POS menerapkan arsitektur hybrid di mana data transaksi dan menu tersimpan secara lokal di internal perangkat (SQLite) untuk keandalan kasir tanpa lag. Untuk memvalidasi hak guna langganan yang sah, aplikasi memerlukan verifikasi berkala dengan server cloud. Bila masa langganan habis, antarmuka kasir akan terkunci sementara hingga dilakukan perpanjangan, tanpa menghapus data produk atau riwayat penjualan yang tersimpan di perangkat.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+            <span class="text-emerald-400 font-mono">6.</span> Dukungan Pelanggan & Kontak Resmi
+          </h2>
+          <p>
+            Untuk pertanyaan, kendala teknis, atau konfirmasi transaksi, pengguna dapat menghubungi tim pengembang melalui:
+          </p>
+          <div class="mt-3 p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1 font-mono text-xs text-slate-300">
+            <p><strong>Pengembang:</strong> Lukmanisme POS Studio</p>
+            <p><strong>Website:</strong> <a href="https://lukmanisme.vercel.app" class="text-emerald-400 hover:underline">https://lukmanisme.vercel.app</a></p>
+            <p><strong>WhatsApp Support:</strong> +62 851-5683-1492</p>
+            <p><strong>Email:</strong> support@lukmanisme.my.id</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-[#0c1322] py-6 text-center text-xs text-slate-500">
+    <p>&copy; 2026 Balanjo POS by Lukmanisme. Seluruh hak cipta dilindungi undang-undang.</p>
+  </footer>
+
+</body>
+</html>

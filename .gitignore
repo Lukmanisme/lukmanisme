@@ -1,7 +1,10 @@
 # Vercel
 .vercel
 
-# Environment & OS
+# Environment & Secrets
+.env
+.env*.local
+.env.local
 .DS_Store
 Thumbs.db
 
