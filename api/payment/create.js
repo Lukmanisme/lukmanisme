@@ -2,6 +2,45 @@
 // Unified Payment Controller: Switches between Midtrans (Plan A) and Xoftware Pay (Plan B)
 import { createXoftwareTransaction } from '../../lib/xoftware.js';
 
+// Helper to resolve active gateway dynamically from Supabase app_config (managed by Superadmin in APK)
+async function resolveActiveGateway() {
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL || 'https://vojacwqruwkhcswyqhyh.supabase.co';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'sb_publishable_nZMjA4bnvEfTvYDEa9QZeA_Mg3S21eE';
+
+    const resp = await fetch(`${supabaseUrl}/rest/v1/app_config?key=eq.payment_methods&select=value`, {
+      method: 'GET',
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`
+      }
+    });
+
+    if (resp.ok) {
+      const rows = await resp.json();
+      if (rows && rows.length > 0 && rows[0].value) {
+        const val = rows[0].value;
+        if (val.provider) {
+          const prov = String(val.provider).toLowerCase();
+          if (prov === 'xoftware' || prov === 'midtrans' || prov === 'manual') {
+            return prov;
+          }
+        }
+        if (val.gateway === true) {
+          return 'midtrans';
+        }
+        if (val.manual_transfer === true && !val.gateway) {
+          return 'manual';
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Unified Payment] Failed to fetch dynamic gateway config from Supabase:', err.message);
+  }
+
+  return (process.env.PAYMENT_GATEWAY || 'midtrans').toLowerCase();
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
@@ -10,8 +49,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const activeGateway = (process.env.PAYMENT_GATEWAY || 'midtrans').toLowerCase();
+  const activeGateway = await resolveActiveGateway();
   const body = req.body || {};
+
+  if (activeGateway === 'manual') {
+    return res.status(400).json({
+      error: 'Pembayaran otomatis dinonaktifkan oleh Admin. Silakan gunakan transfer manual dan kirim bukti via WhatsApp.',
+      gateway: 'manual'
+    });
+  }
 
   try {
     if (activeGateway === 'xoftware') {
