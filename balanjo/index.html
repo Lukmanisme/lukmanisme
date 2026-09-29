@@ -565,12 +565,13 @@
             }
           });
         } else {
-          console.warn('Gateway returned no token/QRIS. Redirecting to demo success:', data.error || data);
-          redirectToSuccess(generatedOrderId);
+          const errMsg = data.details || data.error || data.message || 'Gagal menyiapkan pembayaran dari payment gateway.';
+          console.error('Payment Error:', data);
+          alert(`Gagal memproses pembayaran:\n${errMsg}\n\nCatatan: Jika menggunakan Xoftware Pay, pastikan pengajuan integrasi merchant di dashboard sudah APPROVED.`);
         }
       } catch (err) {
-        console.warn('API error / network failure:', err);
-        redirectToSuccess(generatedOrderId);
+        console.error('API error / network failure:', err);
+        alert(`Terjadi kendala saat menghubungi server pembayaran: ${err.message || 'Network error'}. Silakan coba beberapa saat lagi.`);
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> <span id="pay-btn-label">Bayar Sekarang</span>`;
