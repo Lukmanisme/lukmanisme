@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Surat Pernyataan & Klarifikasi Resmi - Balanjo POS (Midtrans Onboarding)</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 20mm 18mm 20mm;
+    }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      color: #111;
+      line-height: 1.5;
+      font-size: 11pt;
+    @media print {
+      .no-print { display: none !important; }
+      body { margin: 0; padding: 0; }
+    }
+    @media screen {
+      body {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 40px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+      }
+    }
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 8px;
+    }
+    .header-logo {
+      width: 75px;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .logo-badge {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+      line-height: 60px;
+      background: #0f172a;
+      color: #10b981;
+      font-size: 32px;
+      font-weight: bold;
+      border-radius: 12px;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .header-text {
+      vertical-align: middle;
+      padding-left: 15px;
+      text-align: center;
+    }
+    .header-text h1 {
+      margin: 0;
+      font-size: 18pt;
+      font-weight: bold;
+      color: #0f172a;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .header-text h2 {
+      margin: 2px 0 4px 0;
+      font-size: 10pt;
+      font-weight: 600;
+      color: #059669;
+      text-transform: uppercase;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .header-text p {
+      margin: 0;
+      font-size: 8.5pt;
+      color: #4b5563;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .hr-kop-thick {
+      border: 0;
+      border-top: 2.5px solid #0f172a;
+      margin: 0 0 2px 0;
+    }
+    .hr-kop-thin {
+      border: 0;
+      border-top: 0.8px solid #0f172a;
+      margin: 0 0 16px 0;
+    }
+    .meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+      font-size: 10.5pt;
+    }
+    .meta-table td {
+      vertical-align: top;
+      padding: 1.5px 0;
+    }
+    .title-doc {
+      text-align: center;
+      margin: 14px 0 16px 0;
+    }
+    .title-doc h3 {
+      margin: 0;
+      font-size: 12pt;
+      text-decoration: underline;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .title-doc p {
+      margin: 2px 0 0 0;
+      font-size: 9.5pt;
+      font-style: italic;
+    }
+    p, li {
+      text-align: justify;
+      margin-bottom: 8px;
+    }
+    ol, ul {
+      margin-top: 4px;
+      margin-bottom: 8px;
+      padding-left: 24px;
+    }
+    .section-title {
+      font-weight: bold;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10.5pt;
+      color: #0f172a;
+    }
+    .feature-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 9.5pt;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .feature-table th, .feature-table td {
+      border: 1px solid #94a3b8;
+      padding: 6px 8px;
+      vertical-align: top;
+    }
+    .feature-table th {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-weight: bold;
+      text-align: center;
+    }
+    .badge-no {
+      display: inline-block;
+      padding: 2px 6px;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-weight: bold;
+      border-radius: 4px;
+      font-size: 8pt;
+    }
+    .badge-yes {
+      display: inline-block;
+      padding: 2px 6px;
+      background: #dcfce7;
+      color: #15803d;
+      font-weight: bold;
+      border-radius: 4px;
+      font-size: 8pt;
+    }
+    .flow-box {
+      border: 1px dashed #0284c7;
+      background-color: #f0f9ff;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 10px 0 14px 0;
+      font-size: 9.5pt;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #0369a1;
+    }
+    .flow-step {
+      margin-bottom: 4px;
+    }
+    .sign-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+      page-break-inside: avoid;
+    }
+    .sign-table td {
+      vertical-align: top;
+      width: 50%;
+    }
+    .sign-box {
+      text-align: center;
+      padding: 0 20px;
+    }
+    .sign-space {
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-style: italic;
+      color: #64748b;
+      font-size: 9pt;
+    }
+    .sign-name {
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ACTION BANNER (HANYA MUNCUL DI LAYAR BROWSER, OTOMATIS HILANG SAAT CETAK / PDF) -->
+  <div class="no-print" style="background: #0f172a; color: white; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-radius: 10px; font-family: Arial, sans-serif; border: 1px solid #10b981;">
+    <div>
+      <div style="font-weight: bold; font-size: 14px; color: #10b981;">📄 Dokumen Resmi Klarifikasi Onboarding Midtrans</div>
+      <div style="font-size: 12px; color: #cbd5e1; margin-top: 2px;">
+        Klik tombol di samping untuk langsung menyimpan dokumen ini sebagai file <strong>.PDF</strong>, lalu unggah ke formulir Midtrans.
+      </div>
+    </div>
+    <button onclick="window.print()" style="background: #10b981; color: #022c22; font-weight: 800; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+      🖨️ Simpan Sebagai PDF
+    </button>
+  </div>
+
+  <!-- KOP SURAT RESMI -->
+  <table class="header-table">
+    <tr>
+      <td class="header-logo">
+        <div class="logo-badge">B</div>
+      </td>
+      <td class="header-text">
+        <h1>LUKMANISME POS STUDIO</h1>
+        <h2>Penyedia Solusi Perangkat Lunak Kasir Android (Balanjo POS)</h2>
+        <p>Website: https://lukmanisme.vercel.app/balanjo &bull; Email: support@lukmanisme.my.id &bull; Telp/WA: +62 851-5683-1492</p>
+        <p>Indonesia</p>
+      </td>
+    </tr>
+  </table>
+  <hr class="hr-kop-thick">
+  <hr class="hr-kop-thin">
+
+  <!-- META SURAT -->
+  <table class="meta-table">
+    <tr>
+      <td style="width: 120px;">Nomor Surat</td>
+      <td style="width: 15px;">:</td>
+      <td><strong>004/LPS-COMP/IX/2026</strong></td>
+      <td style="text-align: right;">Indonesia, 29 September 2026</td>
+    </tr>
+    <tr>
+      <td>Lampiran</td>
+      <td>:</td>
+      <td>1 (Satu) Berkas Klarifikasi</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Perihal</td>
+      <td>:</td>
+      <td><strong>Klarifikasi Resmi Cakupan Fitur Aplikasi Kasir & Pembaruan URL Transaksi</strong></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Merchant ID</td>
+      <td>:</td>
+      <td><strong>M696916022</strong> (Balanjo POS / Lukmanisme)</td>
+      <td></td>
+    </tr>
+  </table>
+
+  <p>
+    Kepada Yth.<br>
+    <strong>Tim Onboarding & Compliance</strong><br>
+    <strong>PT Midtrans (Midtrans Payment Gateway)</strong><br>
+    Gedung Midplaza / Pasific Century Place, Jakarta
+  </p>
+
+  <p>Dengan hormat,</p>
+
+  <p>
+    Menindaklanjuti catatan dan pertanyaan klarifikasi dari Tim Onboarding Midtrans terkait peninjauan aktivasi akun merchant <strong>Balanjo POS (Merchant ID: M696916022)</strong>, bersama surat ini kami sampaikan penjelasan dan konfirmasi resmi sebagai berikut:
+  </p>
+
+  <!-- POIN 1 -->
+  <div class="section-title">1. Pembaruan dan Konfirmasi URL Transaksi (Poin 1)</div>
+  <p>
+    Kami telah memperbarui seluruh tautan transaksi, dokumen legal, dan endpoint sistem di portal kami agar selaras dengan dokumen flow transaksi yang diajukan sebelumnya:
+  </p>
+  <ul>
+    <li><strong>URL Portal Checkout / Pembayaran Langganan:</strong> <br><code>https://lukmanisme.vercel.app/balanjo</code></li>
+    <li><strong>URL Syarat dan Ketentuan Layanan (Terms of Service):</strong> <br><code>https://lukmanisme.vercel.app/balanjo/terms.html</code></li>
+    <li><strong>URL Kebijakan Privasi (Privacy Policy):</strong> <br><code>https://lukmanisme.vercel.app/balanjo/privacy.html</code></li>
+    <li><strong>URL Webhook Notifikasi Pembayaran Midtrans:</strong> <br><code>https://lukmanisme.vercel.app/api/midtrans/webhook</code></li>
+  </ul>
+
+  <!-- POIN 2 -->
+  <div class="section-title">2. Konfirmasi Resmi Cakupan Fitur Aplikasi: HANYA PENCATATAN TRANSAKSI & TIDAK MENAMPUNG DANA (Poin 2)</div>
+  <p>
+    Dengan ini kami menegaskan dan menyatakan secara sadar bahwa:
+  </p>
+  <ol>
+    <li>
+      <strong>Cakupan Aplikasi Kasir Murni (Point of Sale):</strong> Aplikasi <strong>Balanjo POS</strong> adalah perangkat lunak (*Software as a Service / SaaS*) berbasis Android yang berfungsi <strong>semata-mata untuk pencatatan transaksi kasir, manajemen menu produk, pencatatan stok, dan cetak struk nota belanja</strong> bagi pelaku usaha UMKM (warung makan, laundry, dan toko retail).
+    </li>
+    <li>
+      <strong>TIDAK Menampung Dana Transaksi (*NO FUNDS POOLING / NO ESCROW*):</strong> 
+      Aplikasi Balanjo POS <strong>SAMA SEKALI TIDAK MEMILIKI FITUR ATAU FASILITAS PENAMPUNGAN DANA</strong>, tidak memiliki fitur dompet elektronik (*e-wallet*), tidak memiliki rekening penampung (*escrow*), dan tidak memproses settlement dana penjualan milik konsumen toko.
+    </li>
+    <li>
+      <strong>Tujuan Penggunaan Midtrans:</strong>
+      Integrasi Midtrans pada sistem kami <strong>HANYA dan EKSKLUSIF digunakan untuk pembayaran BIAYA LANGGANAN APLIKASI (SaaS Subscription Fee)</strong> oleh pemilik toko kepada kami selaku pengembang perangkat lunak (contoh: Paket 1 Bulan Rp 30.000, 3 Bulan Rp 75.000, 12 Bulan Rp 250.000).
+    </li>
+  </ol>
+
+  <!-- TABEL PERBANDINGAN CAKUPAN -->
+  <table class="feature-table">
+    <thead>
+      <tr>
+        <th style="width: 35%;">Modul / Fitur</th>
+        <th style="width: 20%;">Status</th>
+        <th style="width: 45%;">Keterangan Operasional</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Pencatatan Pesanan & Kasir</strong></td>
+        <td style="text-align: center;"><span class="badge-yes">TERSEDIA</span></td>
+        <td>Mencatat item yang dibeli, menghitung total belanja, dan menghitung uang kembalian secara lokal di tablet/smartphone.</td>
+      </tr>
+      <tr>
+        <td><strong>Cetak Struk Nota Belanja</strong></td>
+        <td style="text-align: center;"><span class="badge-yes">TERSEDIA</span></td>
+        <td>Mencetak bukti transaksi belanja ke printer thermal Bluetooth milik toko.</td>
+      </tr>
+      <tr>
+        <td><strong>Pembayaran Langganan SaaS</strong></td>
+        <td style="text-align: center;"><span class="badge-yes">VIA MIDTRANS</span></td>
+        <td>Pemilik toko membayar biaya lisensi perpanjangan aplikasi ke rekening pengembang melalui Midtrans (QRIS/VA).</td>
+      </tr>
+      <tr>
+        <td><strong>Penampungan Dana Pembeli Toko</strong></td>
+        <td style="text-align: center;"><span class="badge-no">TIDAK ADA</span></td>
+        <td>Uang pembayaran dari pembeli warung/toko diterima langsung 100% oleh kasir toko secara mandiri (tunai masuk laci toko). Aplikasi tidak menampung sepeser pun.</td>
+      </tr>
+      <tr>
+        <td><strong>E-Wallet / Penarikan Saldo (Withdraw)</strong></td>
+        <td style="text-align: center;"><span class="badge-no">TIDAK ADA</span></td>
+        <td>Aplikasi tidak memiliki fitur saldo, rekening bersama, transfer dana keluar, ataupun fungsi perbankan lainnya.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- DIAGRAM ALUR DANA -->
+  <div class="section-title">3. Diagram Alur Transaksi Dana (Flow of Funds)</div>
+  <div class="flow-box">
+    <div class="flow-step"><strong>A. Alur Pembayaran Pembeli ke Toko (Tanpa Keterlibatan Midtrans):</strong></div>
+    <div style="padding-left: 12px; margin-bottom: 6px; color: #334155;">
+      Pembeli Datang &rarr; Kasir input pesanan di Balanjo POS &rarr; Pembeli bayar TUNAI / QRIS rekening toko sendiri &rarr; Uang langsung masuk kas toko &rarr; Struk tercetak. <em>(Aplikasi hanya mencatat angka).</em>
+    </div>
+    <div class="flow-step"><strong>B. Alur Perpanjangan Langganan Aplikasi (Menggunakan Midtrans):</strong></div>
+    <div style="padding-left: 12px; color: #334155;">
+      Pemilik Toko buka web <code>lukmanisme.vercel.app/balanjo</code> &rarr; Pilih paket Rp 30.000 &rarr; Bayar via Midtrans &rarr; Midtrans verifikasi &rarr; Masa aktif aplikasi kasir toko bertambah 30 hari.
+    </div>
+  </div>
+
+  <p>
+    Demikian surat klarifikasi dan pernyataan resmi ini kami buat dengan sebenar-benarnya untuk dipergunakan sebagai dokumen pendukung proses onboarding merchant Midtrans. Atas perhatian dan kerja sama yang baik dari Tim Midtrans, kami ucapkan terima kasih.
+  </p>
+
+  <!-- TANDA TANGAN -->
+  <table class="sign-table">
+    <tr>
+      <td></td>
+      <td>
+        <div class="sign-box">
+          <p style="margin: 0 0 4px 0;">Hormat kami,</p>
+          <p style="margin: 0 0 10px 0; font-weight: bold;">LUKMANISME POS STUDIO</p>
+          <div class="sign-space">
+            <div style="border: 1px dashed #94a3b8; padding: 6px 16px; border-radius: 6px; background: #fafafa; font-family: Arial, sans-serif; font-size: 8.5pt; color: #059669; font-weight: bold;">
+              [DITANDATANGANI SECARA ELEKTRONIK]<br>
+              Valid via Lukmanisme POS Engineering
+            </div>
+          </div>
+          <p class="sign-name">LUKMAN</p>
+          <p style="margin: 0; font-size: 9.5pt; color: #4b5563;">Founder & Lead Developer</p>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

@@ -355,6 +355,44 @@
       </div>
     </div>
 
+    <!-- QRIS PAYMENT MODAL (FOR XOFTWARE PAY / DIRECT QRIS) -->
+    <div id="qris-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+      <div class="bg-[#111827] border border-emerald-500/40 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl relative">
+        <button onclick="closeQrisModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold leading-none">&times;</button>
+        
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold mb-3 border border-emerald-500/20">
+          <span>QRIS Standar Nasional</span>
+        </div>
+        <h3 class="text-lg font-extrabold text-white mb-1">Pindai untuk Membayar</h3>
+        <p class="text-xs text-slate-400 mb-4">Gunakan GoPay, OVO, DANA, ShopeePay, BCA, atau Mobile Banking apa saja.</p>
+
+        <!-- QR Code Container -->
+        <div class="bg-white p-3.5 rounded-2xl mx-auto inline-block shadow-lg border-2 border-slate-700">
+          <img id="qris-image" src="" alt="QRIS Code" class="w-56 h-56 object-contain block mx-auto">
+        </div>
+
+        <div class="mt-4 p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono space-y-1">
+          <div class="flex justify-between text-slate-400">
+            <span>Total Tagihan:</span>
+            <span id="qris-amount" class="text-emerald-400 font-bold">Rp 30.000</span>
+          </div>
+          <div class="flex justify-between text-slate-500 text-[10px]">
+            <span>No. Pesanan:</span>
+            <span id="qris-order-id">-</span>
+          </div>
+        </div>
+
+        <div class="mt-4 space-y-2">
+          <button onclick="confirmQrisPaid()" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-black font-extrabold text-xs transition shadow-lg">
+            Saya Sudah Membayar
+          </button>
+          <button onclick="closeQrisModal()" class="w-full py-2 text-slate-400 hover:text-slate-200 text-xs transition">
+            Batal / Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- BUSINESS & CONTACT DETAILS -->
     <div id="fitur" class="mt-16 pt-12 border-t border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-8 text-xs text-slate-400">
       <div>
@@ -483,8 +521,8 @@
       btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></span> Menyiapkan Pembayaran...`;
 
       try {
-        // Request Snap Token to our Vercel Serverless Function
-        const resp = await fetch('/api/midtrans/create-token', {
+        // Request Payment to our Unified Gateway API (Midtrans or Xoftware Pay)
+        const resp = await fetch('/api/payment/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -500,8 +538,14 @@
 
         const data = await resp.json();
 
+        // 1. If Xoftware Pay returned QRIS text
+        if (data.qris_text) {
+          openQrisModal(data.qris_text, currentAmount, data.order_id || generatedOrderId);
+          return;
+        }
+
+        // 2. If Midtrans returned Snap Token
         if (data.token) {
-          // Open Snap Popup
           window.snap.pay(data.token, {
             onSuccess: function(result) {
               console.log('Payment Success:', result);
@@ -521,7 +565,7 @@
             }
           });
         } else {
-          console.warn('Backend returned no token. Redirecting to demo success:', data.error);
+          console.warn('Gateway returned no token/QRIS. Redirecting to demo success:', data.error || data);
           redirectToSuccess(generatedOrderId);
         }
       } catch (err) {
@@ -531,6 +575,25 @@
         btn.disabled = false;
         btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> <span id="pay-btn-label">Bayar Sekarang</span>`;
       }
+    }
+
+    // QRIS Modal Controls (Xoftware Pay Plan B)
+    function openQrisModal(qrisText, amount, orderId) {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(qrisText)}`;
+      document.getElementById('qris-image').src = qrUrl;
+      document.getElementById('qris-amount').innerText = `Rp ${Number(amount).toLocaleString('id-ID')}`;
+      document.getElementById('qris-order-id').innerText = orderId;
+      document.getElementById('qris-modal').classList.remove('hidden');
+    }
+
+    function closeQrisModal() {
+      document.getElementById('qris-modal').classList.add('hidden');
+    }
+
+    function confirmQrisPaid() {
+      const orderId = document.getElementById('qris-order-id').innerText || generatedOrderId;
+      closeQrisModal();
+      redirectToSuccess(orderId);
     }
 
     function redirectToSuccess(orderId) {
