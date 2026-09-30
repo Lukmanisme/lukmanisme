@@ -213,13 +213,39 @@
           <!-- Store / Customer Identity Form -->
           <div class="space-y-3 mb-5">
             <div>
-              <label class="block text-[11px] font-bold text-emerald-400 mb-1">
-                Email Akun Kasir <span class="text-rose-400">*Wajib</span>
-              </label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[11px] font-bold text-emerald-400">
+                  Email Akun Kasir <span class="text-rose-400">*Wajib</span>
+                </label>
+                <div id="email-spinner" class="hidden">
+                  <span class="animate-spin inline-block w-3 h-3 border border-emerald-400 border-t-transparent rounded-full"></span>
+                </div>
+              </div>
               <input type="email" id="cust-email" required placeholder="nama@gmail.com (digunakan untuk login APK)"
                      class="w-full px-3 py-2 bg-slate-900 border border-emerald-500/50 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-400">
-              <span class="text-[10px] text-slate-400 mt-1 block">Masa aktif langganan akan otomatis terhubung ke email ini saat login APK.</span>
+              
+              <!-- Realtime Email Check Status Badge -->
+              <div id="email-status-container" class="mt-1.5 hidden">
+                <div id="email-status-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium"></div>
+              </div>
+              <span id="email-helper-text" class="text-[10px] text-slate-400 mt-1 block">Masa aktif langganan akan otomatis terhubung ke email ini saat login APK.</span>
             </div>
+
+            <!-- Password Field (Tampil untuk pendaftaran akun baru) -->
+            <div id="password-field-container" class="space-y-1 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
+              <div class="flex items-center justify-between">
+                <label class="block text-[11px] font-bold text-amber-300">
+                  Buat Password Akun Kasir <span class="text-rose-400">*Wajib</span>
+                </label>
+                <button type="button" onclick="togglePasswordVisibility()" class="text-[10px] text-amber-400 hover:text-amber-200 transition font-mono">
+                  <span id="toggle-pwd-text">Lihat</span>
+                </button>
+              </div>
+              <input type="password" id="cust-password" placeholder="Minimal 6 karakter untuk login APK Android" minlength="6"
+                     class="w-full px-3 py-2 bg-slate-900 border border-amber-500/40 rounded-xl text-xs text-white focus:outline-none focus:border-amber-400">
+              <span class="text-[10px] text-slate-400 block">Password ini akan digunakan bersama email di atas untuk login ke aplikasi Android Balanjo POS.</span>
+            </div>
+
             <div>
               <label class="block text-[11px] font-medium text-slate-400 mb-1">Nama Toko / Warung</label>
               <input type="text" id="cust-store" placeholder="Contoh: Toko Berkah"
@@ -233,8 +259,8 @@
               </div>
               <div>
                 <label class="block text-[11px] font-medium text-slate-400 mb-1">Kode Toko (Opsional)</label>
-                <input type="text" id="cust-tenant" placeholder="T123... / Otomatis"
-                       class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
+                <input type="text" id="cust-tenant" placeholder="T123... / Otomatis" maxlength="10"
+                       class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono uppercase focus:outline-none focus:border-emerald-500">
               </div>
             </div>
           </div>
@@ -499,17 +525,130 @@
       }
     }
 
+    let isExistingAccount = false;
+    let resolvedTenantId = '';
+    let emailCheckTimeout = null;
+
+    function togglePasswordVisibility() {
+      const pwd = document.getElementById('cust-password');
+      const label = document.getElementById('toggle-pwd-text');
+      if (!pwd) return;
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        label.innerText = 'Sembunyikan';
+      } else {
+        pwd.type = 'password';
+        label.innerText = 'Lihat';
+      }
+    }
+
+    function formatDateIndo(dateStr) {
+      try {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    async function checkEmailRegistered(email) {
+      if (!email || !email.includes('@') || email.length < 5) {
+        document.getElementById('email-status-container')?.classList.add('hidden');
+        document.getElementById('password-field-container')?.classList.remove('hidden');
+        isExistingAccount = false;
+        resolvedTenantId = '';
+        return;
+      }
+
+      const spinner = document.getElementById('email-spinner');
+      const badge = document.getElementById('email-status-badge');
+      const statusCont = document.getElementById('email-status-container');
+      const helper = document.getElementById('email-helper-text');
+      const pwdContainer = document.getElementById('password-field-container');
+
+      if (spinner) spinner.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+
+        if (spinner) spinner.classList.add('hidden');
+        if (statusCont) statusCont.classList.remove('hidden');
+
+        if (data.exists) {
+          isExistingAccount = true;
+          resolvedTenantId = data.tenant_id || '';
+
+          // Sembunyikan field password karena akun sudah ada
+          if (pwdContainer) pwdContainer.classList.add('hidden');
+
+          if (badge) {
+            badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            badge.innerHTML = `<span>✓</span> <span>Akun Kasir Terdaftar &bull; Perpanjangan Langganan</span>`;
+          }
+
+          if (data.store_name && document.getElementById('cust-store')) {
+            document.getElementById('cust-store').value = data.store_name;
+          }
+          if (data.tenant_code && document.getElementById('cust-tenant')) {
+            document.getElementById('cust-tenant').value = data.tenant_code;
+          }
+          if (data.phone && document.getElementById('cust-phone') && !document.getElementById('cust-phone').value) {
+            document.getElementById('cust-phone').value = data.phone;
+          }
+
+          if (helper) {
+            if (data.expire_date) {
+              helper.innerText = `Masa aktif saat ini s.d. ${formatDateIndo(data.expire_date)}. Pembayaran ini akan langsung memperpanjang masa aktif tersebut.`;
+            } else {
+              helper.innerText = `Akun terdaftar pada sistem. Masa aktif akan otomatis diperpanjang setelah pembayaran berhasil.`;
+            }
+          }
+        } else {
+          isExistingAccount = false;
+          resolvedTenantId = '';
+
+          // Tampilkan field password untuk akun baru
+          if (pwdContainer) pwdContainer.classList.remove('hidden');
+
+          if (badge) {
+            badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30';
+            badge.innerHTML = `<span>★</span> <span>Akun Baru &bull; Otomatis Didaftarkan ke Database</span>`;
+          }
+
+          if (helper) {
+            helper.innerText = 'Akun kasir baru akan otomatis dibuatkan. Masukkan password di bawah untuk login ke aplikasi Android.';
+          }
+        }
+      } catch (err) {
+        if (spinner) spinner.classList.add('hidden');
+        console.warn('Check email error:', err);
+      }
+    }
+
     async function handlePayClick() {
-      const email = document.getElementById('cust-email') ? document.getElementById('cust-email').value.trim() : '';
+      const emailInput = document.getElementById('cust-email');
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
       const storeName = document.getElementById('cust-store').value.trim() || 'Toko Pelanggan';
       const phone = document.getElementById('cust-phone').value.trim();
-      const tenantId = document.getElementById('cust-tenant').value.trim();
+      const tenantCode = document.getElementById('cust-tenant').value.trim().toUpperCase();
+      const passwordInput = document.getElementById('cust-password');
+      const password = passwordInput ? passwordInput.value : '';
       const btn = document.getElementById('pay-button');
 
       if (!email || !email.includes('@')) {
         alert('Mohon masukkan Email Akun Kasir yang valid. Email ini digunakan untuk mengaktifkan akun dan login ke aplikasi Android.');
-        document.getElementById('cust-email')?.focus();
+        emailInput?.focus();
         return;
+      }
+
+      // Validasi password untuk akun baru
+      if (!isExistingAccount) {
+        if (!password || password.length < 6) {
+          alert('Mohon buat Password Akun Kasir minimal 6 karakter untuk login ke aplikasi Android Balanjo POS.');
+          passwordInput?.focus();
+          return;
+        }
       }
 
       if (currentPlan === 'trial') {
@@ -532,7 +671,10 @@
             store_name: storeName,
             customer_email: email,
             customer_phone: phone,
-            tenant_id: tenantId
+            customer_password: password,
+            tenant_code: tenantCode,
+            tenant_id: resolvedTenantId || '',
+            is_new_account: !isExistingAccount
           })
         });
 
@@ -567,14 +709,14 @@
         } else {
           const errMsg = data.details || data.error || data.message || 'Gagal menyiapkan pembayaran dari payment gateway.';
           console.error('Payment Error:', data);
-          alert(`Gagal memproses pembayaran:\n${errMsg}\n\nCatatan: Jika menggunakan Xoftware Pay, pastikan pengajuan integrasi merchant di dashboard sudah APPROVED.`);
+          alert(`Gagal memproses pembayaran:\n${errMsg}`);
         }
       } catch (err) {
         console.error('API error / network failure:', err);
         alert(`Terjadi kendala saat menghubungi server pembayaran: ${err.message || 'Network error'}. Silakan coba beberapa saat lagi.`);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> <span id="pay-btn-label">Bayar Sekarang</span>`;
+        btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> <span id="pay-btn-label">Bayar Sekarang</span>`;
       }
     }
 
@@ -599,7 +741,9 @@
 
     function redirectToSuccess(orderId) {
       const email = document.getElementById('cust-email') ? document.getElementById('cust-email').value.trim() : 'kasir@balanjo.id';
-      const targetUrl = `/balanjo/success.html?order_id=${encodeURIComponent(orderId || generatedOrderId)}&plan=${encodeURIComponent(currentPlan)}&email=${encodeURIComponent(email)}&amount=${currentAmount}`;
+      const store = document.getElementById('cust-store') ? document.getElementById('cust-store').value.trim() : '';
+      const tenantCode = document.getElementById('cust-tenant') ? document.getElementById('cust-tenant').value.trim() : '';
+      const targetUrl = `/balanjo/success.html?order_id=${encodeURIComponent(orderId || generatedOrderId)}&plan=${encodeURIComponent(currentPlan)}&email=${encodeURIComponent(email)}&amount=${currentAmount}&store=${encodeURIComponent(store)}&tenant=${encodeURIComponent(tenantCode)}&is_new=${isExistingAccount ? '0' : '1'}`;
       window.location.href = targetUrl;
     }
 
@@ -618,6 +762,26 @@
       generatedOrderId = generateOrderId();
       document.getElementById('summary-order-id').innerText = generatedOrderId;
       parseUrlParams();
+
+      // Attach realtime debounce listener for email input
+      const emailInput = document.getElementById('cust-email');
+      if (emailInput) {
+        emailInput.addEventListener('input', () => {
+          clearTimeout(emailCheckTimeout);
+          emailCheckTimeout = setTimeout(() => {
+            checkEmailRegistered(emailInput.value.trim().toLowerCase());
+          }, 600);
+        });
+
+        emailInput.addEventListener('blur', () => {
+          checkEmailRegistered(emailInput.value.trim().toLowerCase());
+        });
+
+        // Trigger initial check if email prefilled
+        if (emailInput.value.trim()) {
+          checkEmailRegistered(emailInput.value.trim().toLowerCase());
+        }
+      }
     });
   </script>
 

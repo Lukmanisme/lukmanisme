@@ -45,8 +45,8 @@
       <h1 class="text-3xl font-extrabold text-white tracking-tight">
         Pembayaran Berhasil! 🎉
       </h1>
-      <p class="text-sm text-slate-300 mt-2">
-        Langganan Balanjo POS Anda telah aktif dan terverifikasi otomatis melalui Midtrans.
+      <p id="success-subheading" class="text-sm text-slate-300 mt-2">
+        Langganan Balanjo POS Anda telah aktif dan akun kasir otomatis terdaftar di sistem.
       </p>
     </div>
 
@@ -61,7 +61,15 @@
         <span id="plan-name" class="text-white font-bold">-</span>
       </div>
       <div class="flex items-center justify-between">
-        <span class="text-slate-400">Email Akun Terdaftar</span>
+        <span class="text-slate-400">Nama Toko</span>
+        <span id="store-name" class="text-white font-bold">-</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Kode Toko</span>
+        <span id="tenant-code" class="text-emerald-400 font-bold">-</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Email Akun Kasir</span>
         <span id="account-email" class="text-emerald-400 font-bold">-</span>
       </div>
       <div class="flex items-center justify-between">
@@ -75,7 +83,7 @@
         </span>
       </div>
       <div class="flex items-center justify-between">
-        <span class="text-slate-400">Masa Aktif Sampai</span>
+        <span class="text-slate-400">Estimasi Masa Aktif</span>
         <span id="expiry-date" class="text-emerald-300 font-bold">-</span>
       </div>
     </div>
@@ -135,13 +143,20 @@
           <div class="w-8 h-8 rounded-xl bg-slate-800 text-slate-300 font-extrabold flex items-center justify-center shrink-0 font-mono text-sm">
             3
           </div>
-          <div class="space-y-1.5 flex-1">
+          <div class="space-y-2 flex-1">
             <h3 class="font-bold text-white text-base">Buka Aplikasi & Masuk dengan Email Anda</h3>
             <p class="text-xs text-slate-300 leading-relaxed">
-              Buka aplikasi Balanjo POS, lalu masuk atau daftarkan akun baru menggunakan email:
+              Buka aplikasi Balanjo POS, lalu masuk (Login) menggunakan Email dan Password yang Anda masukkan saat checkout:
             </p>
-            <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs text-emerald-400 font-bold inline-block">
-              <span id="guide-email">-</span>
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400">Email:</span>
+                <span id="guide-email" class="text-emerald-400 font-bold">-</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400">Password:</span>
+                <span class="text-amber-300 font-bold">Password yang Anda daftarkan di form</span>
+              </div>
             </div>
             <p class="text-xs text-slate-400 pt-1">
               💡 Sistem akan langsung mencocokkan email Anda dengan pembayaran yang baru dilakukan, dan akses kasir langsung terbuka seketika!
@@ -176,6 +191,9 @@
     const orderId = params.get('order_id') || 'ORDER-BLJ-' + Date.now();
     const plan = params.get('plan') || '1m';
     const email = params.get('email') || 'kasir@balanjo.id';
+    const store = params.get('store') || '-';
+    const tenantCode = params.get('tenant') || '-';
+    const isNew = params.get('is_new') === '1';
     const amount = Number(params.get('amount')) || 30000;
 
     const PLAN_NAMES = {
@@ -197,10 +215,18 @@
 
     document.getElementById('order-id').innerText = orderId;
     document.getElementById('plan-name').innerText = PLAN_NAMES[plan] || `Paket Langganan (${plan})`;
+    document.getElementById('store-name').innerText = store;
+    document.getElementById('tenant-code').innerText = tenantCode;
     document.getElementById('account-email').innerText = email;
     document.getElementById('guide-email').innerText = email;
     document.getElementById('total-amount').innerText = `Rp ${amount.toLocaleString('id-ID')}`;
     document.getElementById('expiry-date').innerText = expiryFormatted;
+
+    if (isNew) {
+      document.getElementById('success-subheading').innerText = 'Akun kasir baru berhasil didaftarkan dan paket langganan Anda aktif!';
+    } else {
+      document.getElementById('success-subheading').innerText = 'Perpanjangan langganan berhasil diproses dan masa aktif akun Anda telah bertambah!';
+    }
   </script>
 
 </body>

@@ -175,6 +175,20 @@ export default async function handler(req, res) {
         });
         console.log(`[Xoftware Webhook] Created new subscription for tenant ${tenantId} until ${newExpireDate}`);
       }
+
+      // Record approved payment request
+      await fetch(
+        `${supabaseUrl}/rest/v1/payment_requests?rejection_reason=eq.${encodeURIComponent(order_id)}`,
+        {
+          method: 'PATCH',
+          headers: { ...headers, Prefer: 'return=minimal' },
+          body: JSON.stringify({
+            status: 'approved',
+            reviewed_by: 'Xoftware Pay Webhook',
+            reviewed_at: new Date().toISOString()
+          })
+        }
+      );
     }
 
     return res.status(200).json({
