@@ -100,22 +100,28 @@ export default async function handler(req, res) {
       }
     }
 
-    // 4. If tenant found, retrieve latest subscription info
+    // 4. If tenant found, retrieve latest subscription info & check if trial has been used
     if (tenantId) {
+      let hasUsedTrial = false;
       try {
         const subRes = await fetch(
-          `${supabaseUrl}/rest/v1/subscriptions?tenant_id=eq.${tenantId}&order=expire_date.desc&limit=1`,
+          `${supabaseUrl}/rest/v1/subscriptions?tenant_id=eq.${tenantId}&order=expire_date.desc&limit=5`,
           { headers }
         );
         if (subRes.ok) {
           const subs = await subRes.json();
           if (subs && subs.length > 0) {
             expireDate = subs[0].expire_date;
+            // Tenant is considered having used trial if any subscription exists (trial or paid)
+            hasUsedTrial = subs.some(s => s.plan === 'trial') || subs.length > 0;
           }
         }
       } catch (err) {
         console.warn('[check-email] Failed querying subscriptions:', err.message);
       }
+
+      // If tenant exists in database, user has an account so trial cannot be reused
+      hasUsedTrial = true;
 
       return res.status(200).json({
         exists: true,
@@ -124,7 +130,8 @@ export default async function handler(req, res) {
         store_name: storeName,
         tenant_code: tenantCode,
         phone,
-        expire_date: expireDate
+        expire_date: expireDate,
+        has_used_trial: hasUsedTrial
       });
     }
 

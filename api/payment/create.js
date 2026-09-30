@@ -328,6 +328,59 @@ export default async function handler(req, res) {
   }
 
   try {
+    let finalAmount = Number(body.amount);
+    let appliedVoucherCode = (body.voucher_code || '').trim().toUpperCase();
+
+    // Server-side voucher verification & daily counter update
+    if (appliedVoucherCode && body.plan !== 'trial') {
+      try {
+        const supabaseUrl = process.env.SUPABASE_URL || 'https://vojacwqruwkhcswyqhyh.supabase.co';
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const anonKey = 'sb_publishable_nZMjA4bnvEfTvYDEa9QZeA_Mg3S21eE';
+        const activeKey = (serviceKey && !serviceKey.includes('your_supabase')) ? serviceKey : anonKey;
+
+        const vCfgRes = await fetch(`${supabaseUrl}/rest/v1/app_config?key=eq.promo_vouchers&select=value`, {
+          headers: { apikey: activeKey, Authorization: `Bearer ${activeKey}` }
+        });
+
+        if (vCfgRes.ok) {
+          const vRows = await vCfgRes.json();
+          let vouchersList = (vRows && vRows.length > 0 && Array.isArray(vRows[0].value)) ? vRows[0].value : [];
+          const vIdx = vouchersList.findIndex(v => String(v.code || '').trim().toUpperCase() === appliedVoucherCode);
+
+          if (vIdx !== -1) {
+            const v = vouchersList[vIdx];
+            const today = new Date().toISOString().slice(0, 10);
+            const isValid = v.is_active !== false && (!v.valid_from || today >= v.valid_from) && (!v.valid_until || today <= v.valid_until);
+            const usageHistory = v.usage_history || {};
+            const usedToday = Number(usageHistory[today]) || 0;
+            const dailyLimit = Number(v.daily_limit) || 0;
+
+            if (isValid && (dailyLimit <= 0 || usedToday < dailyLimit)) {
+              // Increment usage counter
+              usageHistory[today] = usedToday + 1;
+              v.usage_history = usageHistory;
+              vouchersList[vIdx] = v;
+
+              // Save updated counter back to Supabase
+              fetch(`${supabaseUrl}/rest/v1/app_config?key=eq.promo_vouchers`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  apikey: activeKey,
+                  Authorization: `Bearer ${activeKey}`,
+                  Prefer: 'return=minimal'
+                },
+                body: JSON.stringify({ value: vouchersList, updated_at: new Date().toISOString() })
+              }).catch(e => console.warn('[create.js] Failed updating voucher usage:', e.message));
+            }
+          }
+        }
+      } catch (vErr) {
+        console.warn('[create.js] Voucher check failed:', vErr.message);
+      }
+    }
+
     // 1. Auto-register tenant & user or fetch existing tenant
     const tenantResult = await ensureTenantAndUser({
       email: body.customer_email,
@@ -338,7 +391,7 @@ export default async function handler(req, res) {
       existingTenantId: body.tenant_id,
       orderId: body.order_id,
       plan: body.plan,
-      amount: body.amount,
+      amount: finalAmount,
       gateway: activeGateway
     });
 
@@ -360,7 +413,7 @@ export default async function handler(req, res) {
     if (activeGateway === 'xoftware') {
       const response = await createXoftwareTransaction({
         orderId: body.order_id,
-        amount: Number(body.amount),
+        amount: finalAmount,
         storeName: body.store_name,
         customerEmail: body.customer_email,
         phone: body.customer_phone,

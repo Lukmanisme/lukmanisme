@@ -69,7 +69,31 @@
   <!-- MAIN CONTAINER -->
   <main class="max-w-5xl mx-auto px-4 sm:px-6 py-10 flex-1 w-full">
     
+    <!-- PENDING QRIS FLOATING NOTICE (RESUME PREVIOUS QR) -->
+    <div id="pending-qr-banner" class="hidden mb-8 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl shrink-0 font-bold">
+          ⚡
+        </div>
+        <div>
+          <h4 class="text-white font-bold text-sm">Transaksi QRIS Anda Masih Menunggu Pembayaran</h4>
+          <p class="text-xs text-slate-300 mt-0.5">
+            Pesanan <span id="pending-order-id" class="font-mono text-amber-300 font-bold">-</span> sebesar <span id="pending-order-amount" class="font-mono text-emerald-400 font-bold">-</span> belum diselesaikan.
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button onclick="resumePendingQris()" class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition shadow-md whitespace-nowrap">
+          Buka QR Pembayaran
+        </button>
+        <button onclick="dismissPendingQris()" class="px-3 py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white text-xs transition whitespace-nowrap">
+          Batalkan
+        </button>
+      </div>
+    </div>
+
     <!-- HERO HEADER -->
+
     <div class="text-center max-w-2xl mx-auto mb-10">
       <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-semibold mb-4">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -270,6 +294,20 @@
             </div>
           </div>
 
+          <!-- Voucher Promo Input Container -->
+          <div class="mb-4">
+            <div class="flex items-center gap-2">
+              <input type="text" id="voucher-code-input" placeholder="Punya Kode Promo / Voucher?" maxlength="20"
+                     class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white uppercase font-mono tracking-wider focus:outline-none focus:border-emerald-400 placeholder:text-slate-500">
+              <button type="button" id="apply-voucher-btn" onclick="applyPromoVoucher()"
+                      class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] border border-slate-700 text-emerald-400 font-bold text-xs rounded-xl transition whitespace-nowrap">
+                Gunakan
+              </button>
+            </div>
+            <!-- Voucher Feedback Message -->
+            <div id="voucher-message" class="text-[11px] font-mono mt-1.5 hidden"></div>
+          </div>
+
           <!-- Order Details Card (Matching Mockup 02) -->
           <div class="bg-slate-900/80 rounded-xl p-4 border border-slate-800 space-y-2.5 text-xs text-slate-300 mb-5">
             <div class="flex justify-between items-center">
@@ -287,6 +325,14 @@
             <div class="flex justify-between items-center pt-2 border-t border-slate-800">
               <span class="text-slate-400">Subtotal:</span>
               <span id="summary-subtotal" class="font-mono text-white">Rp 30.000</span>
+            </div>
+            <!-- Discount Row (Hidden by default) -->
+            <div id="summary-discount-row" class="hidden flex justify-between items-center text-emerald-400">
+              <div class="flex items-center gap-1.5">
+                <span>Diskon Promo (<span id="summary-voucher-label">-</span>):</span>
+                <button type="button" onclick="removePromoVoucher()" class="text-[10px] text-rose-400 hover:text-rose-300 underline font-mono">Batal</button>
+              </div>
+              <span id="summary-discount" class="font-mono font-bold">- Rp 0</span>
             </div>
             <div class="flex justify-between items-center pt-1 text-sm font-bold">
               <span class="text-white">Total Pembayaran:</span>
@@ -543,9 +589,11 @@
 
     let currentPlan = '1m';
     let currentAmount = 30000;
+    let currentBaseAmount = 30000;
     let currentDays = 30;
     let currentPlanName = 'Paket 1 Bulan (30 Hari)';
     let generatedOrderId = '';
+    let appliedVoucher = null; // { code, label, discount_amount }
 
     // Fetch dynamic packages and trial days from Supabase app_config (managed via Superadmin APK)
     async function loadDynamicPackages() {
@@ -623,10 +671,36 @@
     }
 
     function selectPlan(plan, amount, days, label) {
+      if (plan === 'trial' && isTrialDisabled) {
+        alert('Email ini sudah pernah menggunakan uji coba gratis. Silakan pilih paket berlangganan reguler.');
+        return;
+      }
+
       currentPlan = plan;
-      currentAmount = amount;
+      currentBaseAmount = amount;
       currentDays = days;
       currentPlanName = label;
+
+      // If user switches to trial, reset any applied voucher
+      if (plan === 'trial' && appliedVoucher) {
+        removePromoVoucher(true);
+      }
+
+      // Recalculate discount if voucher exists
+      let discountAmount = 0;
+      if (appliedVoucher && plan !== 'trial') {
+        if (appliedVoucher.discount_type === 'percent') {
+          discountAmount = Math.round((currentBaseAmount * appliedVoucher.discount_value) / 100);
+          if (appliedVoucher.max_discount && discountAmount > appliedVoucher.max_discount) {
+            discountAmount = appliedVoucher.max_discount;
+          }
+        } else {
+          discountAmount = appliedVoucher.discount_value;
+        }
+        if (discountAmount > currentBaseAmount) discountAmount = currentBaseAmount;
+      }
+
+      currentAmount = Math.max(0, currentBaseAmount - discountAmount);
 
       // Update Radio Buttons & Card Highlight
       document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
@@ -639,20 +713,235 @@
       // Update Order Summary Box
       document.getElementById('summary-product').innerText = `Paket Langganan POS ${days} Hari`;
       document.getElementById('summary-duration').innerText = `${label}`;
-      document.getElementById('summary-subtotal').innerText = `Rp ${amount.toLocaleString('id-ID')}`;
-      document.getElementById('summary-total').innerText = `Rp ${amount.toLocaleString('id-ID')}`;
+      document.getElementById('summary-subtotal').innerText = `Rp ${currentBaseAmount.toLocaleString('id-ID')}`;
+
+      // Update discount row if applied
+      const discountRow = document.getElementById('summary-discount-row');
+      if (discountAmount > 0 && appliedVoucher) {
+        if (discountRow) discountRow.classList.remove('hidden');
+        document.getElementById('summary-discount').innerText = `- Rp ${discountAmount.toLocaleString('id-ID')}`;
+        document.getElementById('summary-voucher-label').innerText = appliedVoucher.code;
+      } else {
+        if (discountRow) discountRow.classList.add('hidden');
+      }
+
+      document.getElementById('summary-total').innerText = `Rp ${currentAmount.toLocaleString('id-ID')}`;
 
       const btnLabel = document.getElementById('pay-btn-label');
       if (plan === 'trial') {
         btnLabel.innerText = 'Aktifkan Uji Coba Gratis (Rp 0)';
       } else {
-        btnLabel.innerText = `Bayar Sekarang - Rp ${amount.toLocaleString('id-ID')}`;
+        btnLabel.innerText = `Bayar Sekarang - Rp ${currentAmount.toLocaleString('id-ID')}`;
       }
     }
 
     let isExistingAccount = false;
     let resolvedTenantId = '';
     let emailCheckTimeout = null;
+    let isTrialDisabled = false;
+
+    function setTrialOptionDisabled(disabled) {
+      isTrialDisabled = disabled;
+      const trialCard = document.getElementById('card-plan-trial');
+      const trialRadio = document.getElementById('plan_trial');
+      const trialLabel = document.getElementById('label-plan-trial');
+
+      if (!trialCard) return;
+
+      if (disabled) {
+        trialCard.classList.add('opacity-50', 'bg-slate-900/60', 'cursor-not-allowed');
+        trialCard.classList.remove('hover:border-slate-700');
+        if (trialRadio) trialRadio.disabled = true;
+        
+        // Update badge inside trial card to indicate used
+        const badgeSpan = trialCard.querySelector('span.font-mono');
+        if (badgeSpan) {
+          badgeSpan.className = 'text-[10px] font-mono bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded font-semibold border border-rose-500/30';
+          badgeSpan.innerText = 'SUDAH PERNAH DIGUNAKAN';
+        }
+
+        // If currently selecting trial, auto-switch to 1 month plan
+        if (currentPlan === 'trial') {
+          const p1 = packageConfig['1m'] || { price: 30000, days: 30, label: 'Paket 1 Bulan (30 Hari)' };
+          selectPlan('1m', p1.price, p1.days, p1.label);
+        }
+      } else {
+        trialCard.classList.remove('opacity-50', 'bg-slate-900/60', 'cursor-not-allowed');
+        trialCard.classList.add('hover:border-slate-700');
+        if (trialRadio) trialRadio.disabled = false;
+
+        const badgeSpan = trialCard.querySelector('span.font-mono');
+        if (badgeSpan) {
+          badgeSpan.className = 'text-[10px] font-mono bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded font-semibold';
+          badgeSpan.innerText = 'TRIAL BARU';
+        }
+      }
+    }
+
+    // Voucher Promo Handlers
+    async function applyPromoVoucher() {
+      const input = document.getElementById('voucher-code-input');
+      const msg = document.getElementById('voucher-message');
+      const btn = document.getElementById('apply-voucher-btn');
+      const code = input ? input.value.trim().toUpperCase() : '';
+
+      if (!code) {
+        if (msg) {
+          msg.className = 'text-[11px] font-mono mt-1.5 text-rose-400 block';
+          msg.innerText = 'Masukkan kode voucher terlebih dahulu.';
+        }
+        input?.focus();
+        return;
+      }
+
+      if (currentPlan === 'trial') {
+        if (msg) {
+          msg.className = 'text-[11px] font-mono mt-1.5 text-amber-400 block';
+          msg.innerText = 'Voucher promo hanya berlaku untuk paket langganan berbayar.';
+        }
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Memeriksa...';
+
+      try {
+        const resp = await fetch('/api/voucher/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code,
+            plan: currentPlan,
+            original_amount: currentBaseAmount
+          })
+        });
+
+        const data = await resp.json();
+
+        if (data.success) {
+          appliedVoucher = {
+            code: data.code,
+            label: data.label,
+            discount_type: data.discount_type,
+            discount_value: data.discount_value,
+            max_discount: data.max_discount || 0
+          };
+
+          if (msg) {
+            msg.className = 'text-[11px] font-mono mt-1.5 text-emerald-400 block';
+            msg.innerText = `✓ ${data.message}`;
+          }
+          if (input) input.disabled = true;
+          btn.innerText = 'Terpasang';
+          btn.classList.add('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-500/40');
+
+          // Recalculate plan pricing
+          selectPlan(currentPlan, currentBaseAmount, currentDays, currentPlanName);
+        } else {
+          appliedVoucher = null;
+          if (msg) {
+            msg.className = 'text-[11px] font-mono mt-1.5 text-rose-400 block';
+            msg.innerText = `✕ ${data.message || 'Kode voucher tidak valid.'}`;
+          }
+          btn.disabled = false;
+          btn.innerText = 'Gunakan';
+        }
+      } catch (err) {
+        if (msg) {
+          msg.className = 'text-[11px] font-mono mt-1.5 text-rose-400 block';
+          msg.innerText = 'Gagal memverifikasi voucher. Periksa koneksi internet.';
+        }
+        btn.disabled = false;
+        btn.innerText = 'Gunakan';
+      }
+    }
+
+    function removePromoVoucher(silent = false) {
+      appliedVoucher = null;
+      const input = document.getElementById('voucher-code-input');
+      const msg = document.getElementById('voucher-message');
+      const btn = document.getElementById('apply-voucher-btn');
+
+      if (input) {
+        input.value = '';
+        input.disabled = false;
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = 'Gunakan';
+        btn.classList.remove('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-500/40');
+      }
+      if (msg) {
+        if (!silent) {
+          msg.className = 'text-[11px] font-mono mt-1.5 text-slate-400 block';
+          msg.innerText = 'Voucher promo telah dibatalkan.';
+          setTimeout(() => { msg.classList.add('hidden'); }, 3000);
+        } else {
+          msg.classList.add('hidden');
+        }
+      }
+
+      selectPlan(currentPlan, currentBaseAmount, currentDays, currentPlanName);
+    }
+
+    // Pending QRIS Session Management
+    function savePendingQrisSession(qrisText, amount, orderId) {
+      try {
+        const sessionData = {
+          qris_text: qrisText,
+          amount,
+          order_id: orderId,
+          plan: currentPlan,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem('balanjo_pending_qris', JSON.stringify(sessionData));
+        checkPendingQrisSession();
+      } catch (e) {
+        console.warn('Failed saving pending QR session:', e);
+      }
+    }
+
+    function checkPendingQrisSession() {
+      try {
+        const raw = sessionStorage.getItem('balanjo_pending_qris');
+        if (!raw) {
+          document.getElementById('pending-qr-banner')?.classList.add('hidden');
+          return;
+        }
+        const data = JSON.parse(raw);
+        // Expire session after 30 minutes
+        if (Date.now() - data.timestamp > 30 * 60 * 1000) {
+          sessionStorage.removeItem('balanjo_pending_qris');
+          document.getElementById('pending-qr-banner')?.classList.add('hidden');
+          return;
+        }
+
+        const banner = document.getElementById('pending-qr-banner');
+        if (banner) {
+          document.getElementById('pending-order-id').innerText = data.order_id;
+          document.getElementById('pending-order-amount').innerText = `Rp ${Number(data.amount).toLocaleString('id-ID')}`;
+          banner.classList.remove('hidden');
+        }
+      } catch (e) {
+        console.warn('Check pending QR session error:', e);
+      }
+    }
+
+    function resumePendingQris() {
+      try {
+        const raw = sessionStorage.getItem('balanjo_pending_qris');
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        openQrisModal(data.qris_text, data.amount, data.order_id, false);
+      } catch (e) {
+        console.warn('Resume pending QR error:', e);
+      }
+    }
+
+    function dismissPendingQris() {
+      sessionStorage.removeItem('balanjo_pending_qris');
+      document.getElementById('pending-qr-banner')?.classList.add('hidden');
+    }
 
     function togglePasswordVisibility() {
       const pwd = document.getElementById('cust-password');
@@ -707,6 +996,7 @@
         setFieldBlocked(storeInput, false);
         setFieldBlocked(phoneInput, false);
         setFieldBlocked(tenantInput, false);
+        setTrialOptionDisabled(false);
         return;
       }
 
@@ -728,6 +1018,9 @@
         if (data.exists) {
           isExistingAccount = true;
           resolvedTenantId = data.tenant_id || '';
+
+          // Disable Free Trial card since user/tenant is already registered
+          setTrialOptionDisabled(true);
 
           // Sembunyikan field password karena akun sudah ada
           if (pwdContainer) pwdContainer.classList.add('hidden');
@@ -758,6 +1051,9 @@
         } else {
           isExistingAccount = false;
           resolvedTenantId = '';
+
+          // Re-enable trial option for brand new email
+          setTrialOptionDisabled(false);
 
           // Tampilkan field password untuk akun baru
           if (pwdContainer) pwdContainer.classList.remove('hidden');
@@ -886,7 +1182,8 @@
             customer_password: password,
             tenant_code: tenantCode,
             tenant_id: resolvedTenantId || '',
-            is_new_account: !isExistingAccount
+            is_new_account: !isExistingAccount,
+            voucher_code: appliedVoucher ? appliedVoucher.code : ''
           })
         });
 
@@ -956,25 +1253,33 @@
     }
 
     // QRIS Modal Controls (Xoftware Pay Plan B)
-    function openQrisModal(qrisText, amount, orderId) {
+    // QRIS Modal Controls (Xoftware Pay Plan B)
+    function openQrisModal(qrisText, amount, orderId, saveSession = true) {
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(qrisText)}`;
       document.getElementById('qris-image').src = qrUrl;
       document.getElementById('qris-amount').innerText = `Rp ${Number(amount).toLocaleString('id-ID')}`;
       document.getElementById('qris-order-id').innerText = orderId;
       document.getElementById('qris-modal').classList.remove('hidden');
+
+      if (saveSession) {
+        savePendingQrisSession(qrisText, amount, orderId);
+      }
     }
 
     function closeQrisModal() {
       document.getElementById('qris-modal').classList.add('hidden');
+      checkPendingQrisSession();
     }
 
     function confirmQrisPaid() {
       const orderId = document.getElementById('qris-order-id').innerText || generatedOrderId;
+      dismissPendingQris();
       closeQrisModal();
       redirectToSuccess(orderId);
     }
 
     function redirectToSuccess(orderId) {
+      dismissPendingQris();
       const email = document.getElementById('cust-email') ? document.getElementById('cust-email').value.trim() : 'kasir@balanjo.id';
       const store = document.getElementById('cust-store') ? document.getElementById('cust-store').value.trim() : '';
       const tenantCode = document.getElementById('cust-tenant') ? document.getElementById('cust-tenant').value.trim() : '';
@@ -983,6 +1288,7 @@
     }
 
     function showSimulatedSuccess() {
+      dismissPendingQris();
       redirectToSuccess(generatedOrderId);
     }
 
@@ -998,6 +1304,7 @@
       document.getElementById('summary-order-id').innerText = generatedOrderId;
       parseUrlParams();
       loadDynamicPackages();
+      checkPendingQrisSession();
 
       // Attach realtime debounce listener for email input
       const emailInput = document.getElementById('cust-email');
