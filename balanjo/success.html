@@ -15,6 +15,42 @@
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     code, pre { font-family: 'JetBrains Mono', monospace; }
+
+    /* Clean Printable Invoice Layout */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #1a1a1a !important;
+      }
+      .no-print, header, footer, #step-guidance, #help-contact, #supabase-sync-container {
+        display: none !important;
+      }
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      #receipt-card {
+        border: 2px solid #1a1a1a !important;
+        background: #ffffff !important;
+        color: #1a1a1a !important;
+        box-shadow: none !important;
+        border-radius: 8px !important;
+        padding: 24px !important;
+      }
+      #receipt-card * {
+        color: #1a1a1a !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .print-badge-paid {
+        border: 2px solid #10b981 !important;
+        color: #047857 !important;
+        font-weight: 800 !important;
+      }
+    }
+    .print-only { display: none; }
   </style>
 </head>
 <body class="bg-[#0b0f17] text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
@@ -55,10 +91,33 @@
     </div>
 
     <!-- TRANSACTION RECEIPT CARD -->
-    <div class="bg-[#111827] border border-emerald-500/30 rounded-2xl p-5 sm:p-6 mb-8 shadow-xl font-mono text-xs space-y-3">
+    <div id="receipt-card" class="bg-[#111827] border border-emerald-500/30 rounded-2xl p-5 sm:p-6 mb-8 shadow-xl font-mono text-xs space-y-3 relative">
+      <!-- Printable Document Header (Only shown during print / PDF) -->
+      <div class="print-only pb-4 mb-4 border-b-2 border-slate-900">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-extrabold tracking-tight">FAKTUR PEMBAYARAN RESMI</h2>
+            <p class="text-xs text-slate-600">Balanjo POS &bull; PT Kasir Sub POS &bull; Lukmanisme</p>
+          </div>
+          <div class="text-right">
+            <span class="text-xs uppercase font-bold px-3 py-1 bg-emerald-100 text-emerald-800 rounded border border-emerald-400">
+              LUNAS / PAID
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-        <span class="text-slate-400">No. Transaksi</span>
+        <span class="text-slate-400">No. Pesanan (Merchant Ref)</span>
         <span id="order-id" class="text-white font-bold">-</span>
+      </div>
+      <div id="row-invoice-id" class="hidden flex items-center justify-between pb-2 border-b border-slate-800/60">
+        <span class="text-slate-400">No. Invoice Resmi (Gateway)</span>
+        <span id="invoice-id" class="text-emerald-400 font-bold">-</span>
+      </div>
+      <div id="row-tx-id" class="hidden flex items-center justify-between pb-2 border-b border-slate-800/60">
+        <span class="text-slate-400">ID Transaksi Gateway</span>
+        <span id="tx-id" class="text-slate-300">-</span>
       </div>
       <div class="flex items-center justify-between">
         <span class="text-slate-400">Paket Langganan</span>
@@ -100,6 +159,16 @@
             <span id="sync-badge-text">Memeriksa Database Supabase...</span>
           </button>
         </div>
+      </div>
+
+      <!-- Action: Print / Save Invoice PDF -->
+      <div class="pt-4 border-t border-slate-800 no-print">
+        <button type="button" onclick="window.print()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.99] text-white font-semibold text-xs transition border border-slate-700 flex items-center justify-center gap-2">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </svg>
+          <span>🖨️ Cetak / Simpan Faktur (PDF)</span>
+        </button>
       </div>
     </div>
 
@@ -210,6 +279,8 @@
     const tenantCode = params.get('tenant') || '-';
     const isNew = params.get('is_new') === '1';
     const amount = Number(params.get('amount')) || 30000;
+    const invoiceId = params.get('invoice_id') || '';
+    const txId = params.get('tx_id') || '';
 
     const PLAN_NAMES = {
       '1m': 'Paket 1 Bulan (30 Hari)',
@@ -238,6 +309,25 @@
     const expiryFormatted = expiry.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
     document.getElementById('order-id').innerText = orderId;
+
+    // Display Invoice ID & Tx ID if present
+    if (invoiceId) {
+      const rowInvoice = document.getElementById('row-invoice-id');
+      const elInvoice = document.getElementById('invoice-id');
+      if (rowInvoice && elInvoice) {
+        elInvoice.innerText = invoiceId;
+        rowInvoice.classList.remove('hidden');
+      }
+    }
+    if (txId) {
+      const rowTx = document.getElementById('row-tx-id');
+      const elTx = document.getElementById('tx-id');
+      if (rowTx && elTx) {
+        elTx.innerText = txId;
+        rowTx.classList.remove('hidden');
+      }
+    }
+
     document.getElementById('plan-name').innerText = PLAN_NAMES[plan] || `Paket Langganan (${plan})`;
     document.getElementById('store-name').innerText = store;
     document.getElementById('tenant-code').innerText = tenantCode;

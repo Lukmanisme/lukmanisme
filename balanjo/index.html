@@ -446,19 +446,33 @@
         <h3 class="text-lg font-extrabold text-white mb-1">Pindai untuk Membayar</h3>
         <p class="text-xs text-slate-400 mb-4">Gunakan GoPay, OVO, DANA, ShopeePay, BCA, atau Mobile Banking apa saja.</p>
 
+        <!-- Countdown Timer -->
+        <div class="mb-3 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-[11px] flex items-center justify-center gap-1.5">
+          <span class="animate-pulse">⏳</span>
+          <span>Batas Waktu Bayar: <strong id="qris-countdown-timer">59:59</strong></span>
+        </div>
+
         <!-- QR Code Container -->
         <div class="bg-white p-3.5 rounded-2xl mx-auto inline-block shadow-lg border-2 border-slate-700">
           <img id="qris-image" src="" alt="QRIS Code" class="w-56 h-56 object-contain block mx-auto">
         </div>
 
-        <div class="mt-4 p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono space-y-1">
+        <div class="mt-4 p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono space-y-1 text-left">
           <div class="flex justify-between text-slate-400">
             <span>Total Tagihan:</span>
             <span id="qris-amount" class="text-emerald-400 font-bold">Rp 30.000</span>
           </div>
-          <div class="flex justify-between text-slate-500 text-[10px]">
+          <div class="flex justify-between text-slate-400 text-[11px]">
             <span>No. Pesanan:</span>
-            <span id="qris-order-id">-</span>
+            <span id="qris-order-id" class="text-white">-</span>
+          </div>
+          <div id="qris-invoice-row" class="hidden flex justify-between text-slate-400 text-[11px]">
+            <span>Invoice Gateway:</span>
+            <span id="qris-invoice-id" class="text-emerald-300 font-bold">-</span>
+          </div>
+          <div id="qris-tx-row" class="hidden flex justify-between text-slate-400 text-[11px]">
+            <span>ID Transaksi:</span>
+            <span id="qris-tx-id" class="text-slate-300">-</span>
           </div>
         </div>
 
@@ -885,12 +899,15 @@
     }
 
     // Pending QRIS Session Management
-    function savePendingQrisSession(qrisText, amount, orderId) {
+    function savePendingQrisSession(qrisText, amount, orderId, invoiceId = '', txId = '', expiresAt = '') {
       try {
         const sessionData = {
           qris_text: qrisText,
           amount,
           order_id: orderId,
+          invoice_id: invoiceId,
+          tx_id: txId,
+          expires_at: expiresAt,
           plan: currentPlan,
           timestamp: Date.now()
         };
@@ -909,8 +926,8 @@
           return;
         }
         const data = JSON.parse(raw);
-        // Expire session after 30 minutes
-        if (Date.now() - data.timestamp > 30 * 60 * 1000) {
+        // Expire session after 60 minutes
+        if (Date.now() - data.timestamp > 60 * 60 * 1000) {
           sessionStorage.removeItem('balanjo_pending_qris');
           document.getElementById('pending-qr-banner')?.classList.add('hidden');
           return;
@@ -932,7 +949,7 @@
         const raw = sessionStorage.getItem('balanjo_pending_qris');
         if (!raw) return;
         const data = JSON.parse(raw);
-        openQrisModal(data.qris_text, data.amount, data.order_id, false);
+        openQrisModal(data.qris_text, data.amount, data.order_id, data.invoice_id, data.tx_id, data.expires_at, false);
       } catch (e) {
         console.warn('Resume pending QR error:', e);
       }
@@ -1204,7 +1221,14 @@
 
         // 1. If Xoftware Pay returned QRIS text
         if (data.qris_text) {
-          openQrisModal(data.qris_text, currentAmount, data.order_id || generatedOrderId);
+          openQrisModal(
+            data.qris_text,
+            currentAmount,
+            data.order_id || generatedOrderId,
+            data.invoice_id || '',
+            data.transaction_id || '',
+            data.expires_at || ''
+          );
           return;
         }
 
@@ -1253,37 +1277,87 @@
     }
 
     // QRIS Modal Controls (Xoftware Pay Plan B)
-    // QRIS Modal Controls (Xoftware Pay Plan B)
-    function openQrisModal(qrisText, amount, orderId, saveSession = true) {
+    let qrisTimerInterval = null;
+
+    function openQrisModal(qrisText, amount, orderId, invoiceId = '', txId = '', expiresAt = '', saveSession = true) {
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(qrisText)}`;
       document.getElementById('qris-image').src = qrUrl;
       document.getElementById('qris-amount').innerText = `Rp ${Number(amount).toLocaleString('id-ID')}`;
       document.getElementById('qris-order-id').innerText = orderId;
+
+      // Invoice ID display
+      const invoiceRow = document.getElementById('qris-invoice-row');
+      const invoiceEl = document.getElementById('qris-invoice-id');
+      if (invoiceId && invoiceRow && invoiceEl) {
+        invoiceEl.innerText = invoiceId;
+        invoiceRow.classList.remove('hidden');
+      } else if (invoiceRow) {
+        invoiceRow.classList.add('hidden');
+      }
+
+      // Tx ID display
+      const txRow = document.getElementById('qris-tx-row');
+      const txEl = document.getElementById('qris-tx-id');
+      if (txId && txRow && txEl) {
+        txEl.innerText = txId;
+        txRow.classList.remove('hidden');
+      } else if (txRow) {
+        txRow.classList.add('hidden');
+      }
+
+      // Countdown Timer Logic (Default 60 mins if expiresAt not provided)
+      clearInterval(qrisTimerInterval);
+      let targetTime;
+      if (expiresAt) {
+        targetTime = new Date(expiresAt).getTime();
+      } else {
+        targetTime = Date.now() + 60 * 60 * 1000;
+      }
+
+      const timerEl = document.getElementById('qris-countdown-timer');
+      function updateCountdown() {
+        const remaining = Math.max(0, Math.floor((targetTime - Date.now()) / 1000));
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        if (timerEl) {
+          timerEl.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+        if (remaining <= 0) {
+          clearInterval(qrisTimerInterval);
+          if (timerEl) timerEl.innerText = 'Kedaluwarsa';
+        }
+      }
+      updateCountdown();
+      qrisTimerInterval = setInterval(updateCountdown, 1000);
+
       document.getElementById('qris-modal').classList.remove('hidden');
 
       if (saveSession) {
-        savePendingQrisSession(qrisText, amount, orderId);
+        savePendingQrisSession(qrisText, amount, orderId, invoiceId, txId, expiresAt);
       }
     }
 
     function closeQrisModal() {
+      clearInterval(qrisTimerInterval);
       document.getElementById('qris-modal').classList.add('hidden');
       checkPendingQrisSession();
     }
 
     function confirmQrisPaid() {
       const orderId = document.getElementById('qris-order-id').innerText || generatedOrderId;
+      const invoiceId = document.getElementById('qris-invoice-id') ? document.getElementById('qris-invoice-id').innerText : '';
+      const txId = document.getElementById('qris-tx-id') ? document.getElementById('qris-tx-id').innerText : '';
       dismissPendingQris();
       closeQrisModal();
-      redirectToSuccess(orderId);
+      redirectToSuccess(orderId, invoiceId, txId);
     }
 
-    function redirectToSuccess(orderId) {
+    function redirectToSuccess(orderId, invoiceId = '', txId = '') {
       dismissPendingQris();
       const email = document.getElementById('cust-email') ? document.getElementById('cust-email').value.trim() : 'kasir@balanjo.id';
       const store = document.getElementById('cust-store') ? document.getElementById('cust-store').value.trim() : '';
       const tenantCode = document.getElementById('cust-tenant') ? document.getElementById('cust-tenant').value.trim() : '';
-      const targetUrl = `/balanjo/success.html?order_id=${encodeURIComponent(orderId || generatedOrderId)}&plan=${encodeURIComponent(currentPlan)}&email=${encodeURIComponent(email)}&amount=${currentAmount}&store=${encodeURIComponent(store)}&tenant=${encodeURIComponent(tenantCode)}&is_new=${isExistingAccount ? '0' : '1'}`;
+      const targetUrl = `/balanjo/success.html?order_id=${encodeURIComponent(orderId || generatedOrderId)}&plan=${encodeURIComponent(currentPlan)}&email=${encodeURIComponent(email)}&amount=${currentAmount}&store=${encodeURIComponent(store)}&tenant=${encodeURIComponent(tenantCode)}&is_new=${isExistingAccount ? '0' : '1'}&invoice_id=${encodeURIComponent(invoiceId || '')}&tx_id=${encodeURIComponent(txId || '')}`;
       window.location.href = targetUrl;
     }
 

@@ -421,6 +421,9 @@ export default async function handler(req, res) {
       });
 
       const trxData = response.data || response;
+      const invoiceId = trxData.invoice_id || trxData.invoice || (trxData.invoice_detail ? trxData.invoice_detail.id : null);
+      const txId = trxData.id || trxData.tx_id || trxData.transaction_id || null;
+
       return res.status(200).json({
         success: true,
         gateway: 'xoftware',
@@ -429,9 +432,10 @@ export default async function handler(req, res) {
         tenant_id: tenantId,
         tenant_code: tenantCode,
         qris_text: trxData.qris_text || '',
-        transaction_id: trxData.transaction_id,
-        amount: trxData.amount || body.amount,
-        expires_at: trxData.expires_at,
+        transaction_id: txId,
+        invoice_id: invoiceId,
+        amount: trxData.amount || finalAmount,
+        expires_at: trxData.expires_at || trxData.expired_at || null,
         url: trxData.url || ''
       });
 
