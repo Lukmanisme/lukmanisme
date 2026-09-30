@@ -83,8 +83,19 @@
         </span>
       </div>
       <div class="flex items-center justify-between">
-        <span class="text-slate-400">Estimasi Masa Aktif</span>
+        <span class="text-slate-400">Masa Aktif Langganan</span>
         <span id="expiry-date" class="text-emerald-300 font-bold">-</span>
+      </div>
+      
+      <!-- Supabase Live Sync Status Row -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
+        <span class="text-slate-400">Sinkronisasi Database</span>
+        <div id="supabase-sync-container">
+          <button type="button" onclick="triggerManualSyncCheck()" id="supabase-sync-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 transition hover:bg-amber-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+            <span id="sync-badge-text">Memeriksa Database Supabase...</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -208,6 +219,15 @@
       '12m': 365
     };
 
+    function formatDateIndo(dateStr) {
+      try {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
     const days = PLAN_DAYS[plan] || 30;
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + days);
@@ -227,6 +247,65 @@
     } else {
       document.getElementById('success-subheading').innerText = 'Perpanjangan langganan berhasil diproses dan masa aktif akun Anda telah bertambah!';
     }
+
+    // Live Database Sync Polling
+    let syncCheckCount = 0;
+    const maxSyncChecks = 6;
+
+    async function checkLiveDatabaseSync() {
+      syncCheckCount++;
+      const badge = document.getElementById('supabase-sync-badge');
+      const badgeText = document.getElementById('sync-badge-text');
+
+      try {
+        const res = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.exists) {
+            if (data.store_name) document.getElementById('store-name').innerText = data.store_name;
+            if (data.tenant_code) document.getElementById('tenant-code').innerText = data.tenant_code;
+            
+            if (data.expire_date) {
+              const liveExp = formatDateIndo(data.expire_date);
+              document.getElementById('expiry-date').innerText = liveExp;
+              
+              if (badge && badgeText) {
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                badge.innerHTML = `<span>✓</span> <span>Tersinkronisasi ke Database Supabase</span>`;
+              }
+              return true; // Sync verified!
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Sync check warning:', err);
+      }
+
+      if (syncCheckCount < maxSyncChecks) {
+        setTimeout(checkLiveDatabaseSync, 2500);
+      } else {
+        if (badge && badgeText) {
+          badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer hover:bg-slate-700';
+          badge.innerHTML = `<span>⏳</span> <span>Sinkronisasi sedang diproses (Klik untuk cek ulang)</span>`;
+        }
+      }
+      return false;
+    }
+
+    function triggerManualSyncCheck() {
+      syncCheckCount = 0;
+      const badge = document.getElementById('supabase-sync-badge');
+      if (badge) {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30';
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> <span>Memeriksa Ulang Database...</span>`;
+      }
+      checkLiveDatabaseSync();
+    }
+
+    // Start live sync checking after page load
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(checkLiveDatabaseSync, 1000);
+    });
   </script>
 
 </body>

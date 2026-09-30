@@ -305,6 +305,9 @@
             <span id="pay-btn-label">Bayar Sekarang</span>
           </button>
 
+          <!-- Realtime Progress Indicator Bar -->
+          <div id="checkout-progress-status" class="hidden mt-2 p-2.5 rounded-xl text-center text-xs font-mono font-semibold transition border"></div>
+
           <!-- Security Seal -->
           <div class="mt-4 pt-4 border-t border-slate-800 flex items-center justify-center gap-2 text-[11px] text-slate-400 font-mono">
             <svg class="w-3.5 h-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
@@ -414,6 +417,67 @@
           </button>
           <button onclick="closeQrisModal()" class="w-full py-2 text-slate-400 hover:text-slate-200 text-xs transition">
             Batal / Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATABASE ACTIVITY & PAYMENT ERROR DIAGNOSTIC MODAL -->
+    <div id="diagnostic-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+      <div class="bg-[#111827] border border-rose-500/40 rounded-3xl max-w-lg w-full p-6 text-left shadow-2xl relative">
+        <button onclick="closeDiagnosticModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold leading-none">&times;</button>
+
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Kendala Aktivitas Database / Pembayaran</h3>
+            <span id="diag-stage-badge" class="inline-block mt-0.5 text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30">
+              Tahap: Inisialisasi
+            </span>
+          </div>
+        </div>
+
+        <!-- Problem Summary -->
+        <div class="p-3 rounded-xl bg-rose-500/5 border border-rose-500/20 mb-3 text-xs">
+          <span class="block text-[10px] font-mono uppercase tracking-wider text-rose-400 font-bold mb-1">Masalah yang Ditemukan</span>
+          <p id="diag-error-text" class="text-slate-200 font-medium leading-relaxed">-</p>
+        </div>
+
+        <!-- Root Cause Analysis -->
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 mb-3 text-xs">
+          <span class="block text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold mb-1">Analisa Penyebab</span>
+          <p id="diag-analysis-text" class="text-slate-300 leading-relaxed">-</p>
+        </div>
+
+        <!-- Actionable Recommendation -->
+        <div class="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 mb-4 text-xs">
+          <span class="block text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold mb-1">Saran Solusi Perbaikan</span>
+          <p id="diag-recommendation-text" class="text-slate-200 leading-relaxed">-</p>
+        </div>
+
+        <!-- Collapsible Technical Logs -->
+        <details class="group bg-black/40 rounded-xl border border-slate-800 p-2.5 mb-4 text-[11px] font-mono">
+          <summary class="cursor-pointer text-slate-400 group-open:text-emerald-400 transition select-none flex items-center justify-between">
+            <span>Detail Log Teknis (JSON Raw)</span>
+            <span class="text-[10px] text-slate-500 group-open:rotate-180 transition">&darr;</span>
+          </summary>
+          <pre id="diag-raw-logs" class="mt-2 p-2 bg-slate-950 rounded text-slate-400 text-[10px] overflow-x-auto max-h-40 whitespace-pre-wrap"></pre>
+        </details>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2">
+          <button id="copy-diag-btn" onclick="copyDiagnosticLogs()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 border border-slate-700">
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <span id="copy-diag-label">Salin Detail Error</span>
+          </button>
+          <button onclick="closeDiagnosticModal()" class="py-2.5 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-black text-xs font-bold transition">
+            Tutup
           </button>
         </div>
       </div>
@@ -623,7 +687,60 @@
       } catch (err) {
         if (spinner) spinner.classList.add('hidden');
         console.warn('Check email error:', err);
+        const statusCont = document.getElementById('email-status-container');
+        const badge = document.getElementById('email-status-badge');
+        if (statusCont && badge) {
+          statusCont.classList.remove('hidden');
+          badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium bg-rose-500/10 text-rose-300 border border-rose-500/30';
+          badge.innerHTML = `<span>⚠</span> <span>Pengecekan database Supabase lambat/terkendala. Anda tetap dapat melanjutkan.</span>`;
+        }
       }
+    }
+
+    let currentDiagnosticPayload = null;
+
+    function showDiagnosticError(data) {
+      currentDiagnosticPayload = data;
+      document.getElementById('diag-stage-badge').innerText = `Tahap: ${data.stage || 'Database / Gateway'}`;
+      document.getElementById('diag-error-text').innerText = data.error || 'Terjadi kendala dalam pemrosesan transaksi.';
+      document.getElementById('diag-analysis-text').innerText = data.analysis || 'Sistem tidak dapat memverifikasi atau menyimpan data ke Supabase.';
+      document.getElementById('diag-recommendation-text').innerText = data.recommendation || 'Periksa konfigurasi kredensial Supabase / Vercel atau hubungi admin.';
+      
+      const rawLogs = document.getElementById('diag-raw-logs');
+      if (rawLogs) {
+        rawLogs.innerText = JSON.stringify(data, null, 2);
+      }
+      
+      const modal = document.getElementById('diagnostic-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeDiagnosticModal() {
+      const modal = document.getElementById('diagnostic-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function copyDiagnosticLogs() {
+      if (!currentDiagnosticPayload) return;
+      const textToCopy = `[Balanjo POS Diagnostic Report]\n` +
+        `Stage: ${currentDiagnosticPayload.stage || '-'}\n` +
+        `Error: ${currentDiagnosticPayload.error || '-'}\n` +
+        `Analysis: ${currentDiagnosticPayload.analysis || '-'}\n` +
+        `Recommendation: ${currentDiagnosticPayload.recommendation || '-'}\n` +
+        `Timestamp: ${new Date().toISOString()}\n\n` +
+        `Technical Details:\n${JSON.stringify(currentDiagnosticPayload.technical_details || currentDiagnosticPayload, null, 2)}`;
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const label = document.getElementById('copy-diag-label');
+        if (label) {
+          label.innerText = '✓ Berhasil Disalin!';
+          setTimeout(() => {
+            label.innerText = 'Salin Detail Error';
+          }, 2500);
+        }
+      }).catch(() => {
+        alert('Gagal menyalin otomatis. Silakan salin manual dari kotak detail teknis.');
+      });
     }
 
     async function handlePayClick() {
@@ -635,6 +752,9 @@
       const passwordInput = document.getElementById('cust-password');
       const password = passwordInput ? passwordInput.value : '';
       const btn = document.getElementById('pay-button');
+      const progressStatus = document.getElementById('checkout-progress-status');
+
+      if (progressStatus) progressStatus.classList.add('hidden');
 
       if (!email || !email.includes('@')) {
         alert('Mohon masukkan Email Akun Kasir yang valid. Email ini digunakan untuk mengaktifkan akun dan login ke aplikasi Android.');
@@ -657,7 +777,7 @@
       }
 
       btn.disabled = true;
-      btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></span> Menyiapkan Pembayaran...`;
+      btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></span> Mendaftarkan & Menyiapkan Pembayaran...`;
 
       try {
         // Request Payment to our Unified Gateway API (Midtrans or Xoftware Pay)
@@ -680,6 +800,19 @@
 
         const data = await resp.json();
 
+        // If backend returned error or non-200 status
+        if (!resp.ok || data.success === false) {
+          showDiagnosticError(data);
+          return;
+        }
+
+        // Display database operation success progress bar
+        if (progressStatus && data.db_status) {
+          progressStatus.className = 'mt-2 p-2.5 rounded-xl text-center text-xs font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+          progressStatus.innerHTML = `<span>✓</span> <span>${data.db_status.message || 'Akun & Toko berhasil diproses di Supabase!'}</span> &bull; <span class="text-white">Membuka pembayaran...</span>`;
+          progressStatus.classList.remove('hidden');
+        }
+
         // 1. If Xoftware Pay returned QRIS text
         if (data.qris_text) {
           openQrisModal(data.qris_text, currentAmount, data.order_id || generatedOrderId);
@@ -700,20 +833,30 @@
             },
             onError: function(result) {
               console.error('Payment Error:', result);
-              alert('Terjadi kendala dalam proses pembayaran.');
+              showDiagnosticError({
+                stage: 'midtrans_popup_error',
+                error: 'Kendala pada popup pembayaran Midtrans',
+                analysis: 'Pembayaran gagal diproses oleh gateway atau dibatalkan oleh bank.',
+                recommendation: 'Coba gunakan metode pembayaran alternatif (QRIS/Transfer VA) atau ulangi beberapa saat lagi.',
+                technical_details: result
+              });
             },
             onClose: function() {
               console.log('Customer closed payment popup');
             }
           });
         } else {
-          const errMsg = data.details || data.error || data.message || 'Gagal menyiapkan pembayaran dari payment gateway.';
-          console.error('Payment Error:', data);
-          alert(`Gagal memproses pembayaran:\n${errMsg}`);
+          showDiagnosticError(data);
         }
       } catch (err) {
         console.error('API error / network failure:', err);
-        alert(`Terjadi kendala saat menghubungi server pembayaran: ${err.message || 'Network error'}. Silakan coba beberapa saat lagi.`);
+        showDiagnosticError({
+          stage: 'network_connection',
+          error: `Gagal menghubungi server pembayaran: ${err.message || 'Network error'}`,
+          analysis: 'Perangkat tidak dapat terhubung ke endpoint /api/payment/create.',
+          recommendation: 'Periksa koneksi internet Anda dan pastikan server Vercel aktif.',
+          technical_details: { message: err.message, stack: err.stack }
+        });
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> <span id="pay-btn-label">Bayar Sekarang</span>`;

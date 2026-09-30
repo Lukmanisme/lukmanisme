@@ -1,6 +1,6 @@
 // api/payment/create.js
 // Unified Payment Controller: Switches between Midtrans (Plan A) and Xoftware Pay (Plan B)
-// Auto-registers new tenant & user in Supabase if not yet registered.
+// Auto-registers new tenant & user in Supabase with structured diagnostic feedback on success/failure.
 import crypto from 'crypto';
 import { createXoftwareTransaction } from '../../lib/xoftware.js';
 
@@ -59,7 +59,8 @@ async function ensureTenantAndUser({
   const supabaseUrl = process.env.SUPABASE_URL || 'https://vojacwqruwkhcswyqhyh.supabase.co';
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = 'sb_publishable_nZMjA4bnvEfTvYDEa9QZeA_Mg3S21eE';
-  const activeKey = (serviceKey && !serviceKey.includes('your_supabase')) ? serviceKey : anonKey;
+  const hasServiceKey = Boolean(serviceKey && !serviceKey.includes('your_supabase'));
+  const activeKey = hasServiceKey ? serviceKey : anonKey;
 
   const headers = {
     'Content-Type': 'application/json',
@@ -69,6 +70,8 @@ async function ensureTenantAndUser({
 
   let resolvedTenantId = existingTenantId;
   let resolvedTenantCode = customTenantCode ? customTenantCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) : '';
+  let isNewAccount = false;
+  let authUserId = null;
 
   // 1. If tenantId not provided, search by email in profiles and tenants
   if (!resolvedTenantId && email) {
@@ -108,15 +111,32 @@ async function ensureTenantAndUser({
 
   // 2. If STILL no tenantId, this is a NEW customer: auto-register user & tenant!
   if (!resolvedTenantId && email) {
+    isNewAccount = true;
     const newTenantId = crypto.randomUUID();
     if (!resolvedTenantCode) {
       resolvedTenantCode = 'T' + newTenantId.replace(/-/g, '').substring(0, 9).toUpperCase();
     }
 
-    let authUserId = null;
+    // A. Check Service Role Key requirement for new user creation
+    if (!hasServiceKey && password) {
+      console.warn('[ensureTenantAndUser] Warning: SUPABASE_SERVICE_ROLE_KEY missing on Vercel.');
+      // Return a diagnostic error so the admin/user immediately knows what to configure
+      return {
+        success: false,
+        stage: 'supabase_config',
+        error: 'Kredensial SUPABASE_SERVICE_ROLE_KEY belum terpasang di Vercel',
+        analysis: 'Pendaftaran akun baru secara otomatis memerlukan kunci Service Role Supabase untuk membuat pengguna di auth.users tanpa verifikasi email manual.',
+        recommendation: 'Buka Dashboard Vercel -> Project Settings -> Environment Variables, tambahkan SUPABASE_SERVICE_ROLE_KEY dengan nilai service_role secret dari Supabase Dashboard (Settings -> API), lalu lakukan Redeploy.',
+        technical_details: {
+          missing_env: 'SUPABASE_SERVICE_ROLE_KEY',
+          email,
+          timestamp: new Date().toISOString()
+        }
+      };
+    }
 
-    // A. Create Supabase Auth User via Admin API if serviceKey is present
-    if (serviceKey && !serviceKey.includes('your_supabase') && password) {
+    // B. Create Supabase Auth User via Admin API
+    if (hasServiceKey && password) {
       try {
         const authRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
           method: 'POST',
@@ -136,20 +156,46 @@ async function ensureTenantAndUser({
           })
         });
 
+        const authData = await authRes.json();
+
         if (authRes.ok) {
-          const authData = await authRes.json();
           authUserId = authData.id;
           console.log(`[ensureTenantAndUser] Created Supabase Auth user: ${authUserId} for ${email}`);
         } else {
-          const authErr = await authRes.json();
-          console.warn('[ensureTenantAndUser] Admin Auth create note:', authErr);
+          // If auth creation fails (e.g. user already registered or password weak)
+          const errorMsg = authData.message || authData.msg || authData.error_description || 'Gagal mendaftarkan akun di Supabase Auth';
+          return {
+            success: false,
+            stage: 'supabase_auth_admin',
+            error: `Gagal membuat akun kasir: ${errorMsg}`,
+            analysis: `Supabase Auth Admin API mengembalikan error status ${authRes.status}: ${errorMsg}`,
+            recommendation: errorMsg.toLowerCase().includes('already')
+              ? 'Email ini kemungkinan sudah ada di auth.users. Coba gunakan email lain atau periksa daftar pengguna di Supabase Auth.'
+              : 'Pastikan format password memenuhi standar keamanan (minimal 6 karakter) dan parameter user_metadata valid.',
+            technical_details: {
+              http_status: authRes.status,
+              supabase_error: authData,
+              email,
+              timestamp: new Date().toISOString()
+            }
+          };
         }
       } catch (authEx) {
-        console.warn('[ensureTenantAndUser] Failed calling Admin Auth API:', authEx.message);
+        return {
+          success: false,
+          stage: 'supabase_auth_network',
+          error: `Koneksi ke Supabase Auth gagal: ${authEx.message}`,
+          analysis: 'Terjadi gangguan jaringan atau timeout saat memanggil endpoint Admin Auth Supabase.',
+          recommendation: 'Periksa koneksi internet serverless Vercel atau status layanan Supabase.',
+          technical_details: {
+            exception: authEx.message,
+            timestamp: new Date().toISOString()
+          }
+        };
       }
     }
 
-    // B. Insert into public.tenants
+    // C. Insert into public.tenants
     try {
       const insertTenantRes = await fetch(`${supabaseUrl}/rest/v1/tenants`, {
         method: 'POST',
@@ -171,12 +217,37 @@ async function ensureTenantAndUser({
       if (insertTenantRes.ok) {
         resolvedTenantId = newTenantId;
         console.log(`[ensureTenantAndUser] Created tenant ${resolvedTenantId} (${resolvedTenantCode})`);
+      } else {
+        const tErrText = await insertTenantRes.text();
+        return {
+          success: false,
+          stage: 'public_tenants_insert',
+          error: 'Gagal menyimpan data toko ke tabel public.tenants',
+          analysis: `Supabase PostgREST menolak penambahan tenant: ${tErrText}`,
+          recommendation: 'Periksa apakah kode toko sudah terpakai sebelumnya (UNIQUE constraint) atau aturan RLS pada tabel tenants.',
+          technical_details: {
+            http_status: insertTenantRes.status,
+            error_body: tErrText,
+            tenant_code: resolvedTenantCode,
+            timestamp: new Date().toISOString()
+          }
+        };
       }
     } catch (tEx) {
-      console.warn('[ensureTenantAndUser] Failed inserting tenant:', tEx.message);
+      return {
+        success: false,
+        stage: 'public_tenants_network',
+        error: `Gagal menghubungi tabel tenants: ${tEx.message}`,
+        analysis: 'Terjadi kendala jaringan saat menghubungi database Supabase PostgREST.',
+        recommendation: 'Periksa URL Supabase dan status endpoint database.',
+        technical_details: {
+          exception: tEx.message,
+          timestamp: new Date().toISOString()
+        }
+      };
     }
 
-    // C. Update public.profiles if auth user was created
+    // D. Update public.profiles if auth user was created
     if (authUserId && resolvedTenantId) {
       try {
         await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${authUserId}`, {
@@ -191,12 +262,12 @@ async function ensureTenantAndUser({
           })
         });
       } catch (pEx) {
-        console.warn('[ensureTenantAndUser] Failed linking profile to tenant:', pEx.message);
+        console.warn('[ensureTenantAndUser] Warning: Failed linking profile to tenant:', pEx.message);
       }
     }
   }
 
-  // 3. Record pending payment request with orderId so webhook can easily link and approve
+  // 3. Record pending payment request with orderId
   if (resolvedTenantId && orderId) {
     try {
       await fetch(`${supabaseUrl}/rest/v1/payment_requests`, {
@@ -221,8 +292,19 @@ async function ensureTenantAndUser({
   }
 
   return {
+    success: true,
     tenantId: resolvedTenantId,
-    tenantCode: resolvedTenantCode
+    tenantCode: resolvedTenantCode,
+    isNewAccount,
+    dbStatus: {
+      stage: 'completed',
+      user_created: isNewAccount,
+      tenant_id: resolvedTenantId,
+      tenant_code: resolvedTenantCode,
+      message: isNewAccount
+        ? 'Akun kasir baru dan data toko berhasil didaftarkan di Supabase'
+        : 'Data akun kasir dan toko terdaftar berhasil diverifikasi'
+    }
   };
 }
 
@@ -239,14 +321,15 @@ export default async function handler(req, res) {
 
   if (activeGateway === 'manual') {
     return res.status(400).json({
+      success: false,
       error: 'Pembayaran otomatis dinonaktifkan oleh Admin. Silakan gunakan transfer manual dan kirim bukti via WhatsApp.',
       gateway: 'manual'
     });
   }
 
   try {
-    // Auto-register tenant & user or fetch existing tenant
-    const { tenantId, tenantCode } = await ensureTenantAndUser({
+    // 1. Auto-register tenant & user or fetch existing tenant
+    const tenantResult = await ensureTenantAndUser({
       email: body.customer_email,
       password: body.customer_password,
       storeName: body.store_name,
@@ -259,8 +342,22 @@ export default async function handler(req, res) {
       gateway: activeGateway
     });
 
+    // If database registration failed, return structured diagnostic error
+    if (!tenantResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: tenantResult.error,
+        stage: tenantResult.stage,
+        analysis: tenantResult.analysis,
+        recommendation: tenantResult.recommendation,
+        technical_details: tenantResult.technical_details
+      });
+    }
+
+    const { tenantId, tenantCode, dbStatus } = tenantResult;
+
+    // 2. Delegate to active payment gateway
     if (activeGateway === 'xoftware') {
-      // Delegate to Xoftware Pay
       const response = await createXoftwareTransaction({
         orderId: body.order_id,
         amount: Number(body.amount),
@@ -272,7 +369,9 @@ export default async function handler(req, res) {
 
       const trxData = response.data || response;
       return res.status(200).json({
+        success: true,
         gateway: 'xoftware',
+        db_status: dbStatus,
         order_id: body.order_id,
         tenant_id: tenantId,
         tenant_code: tenantCode,
@@ -288,9 +387,11 @@ export default async function handler(req, res) {
       const serverKey = process.env.MIDTRANS_SERVER_KEY;
       if (!serverKey) {
         return res.status(200).json({
+          success: true,
           gateway: 'midtrans',
           demo_mode: true,
           token: null,
+          db_status: dbStatus,
           tenant_id: tenantId,
           tenant_code: tenantCode,
           order_id: body.order_id
@@ -341,8 +442,26 @@ export default async function handler(req, res) {
       });
 
       const mData = await mRes.json();
+
+      if (!mRes.ok || (!mData.token && !mData.redirect_url)) {
+        return res.status(400).json({
+          success: false,
+          stage: 'midtrans_gateway',
+          error: mData.error_messages ? mData.error_messages.join(', ') : 'Gagal membuat transaksi di Midtrans',
+          analysis: `Midtrans Snap API mengembalikan respons status ${mRes.status}`,
+          recommendation: 'Periksa MIDTRANS_SERVER_KEY dan pastikan akun Midtrans sudah berstatus aktif (Production/Sandbox).',
+          technical_details: {
+            http_status: mRes.status,
+            midtrans_response: mData,
+            order_id: body.order_id
+          }
+        });
+      }
+
       return res.status(200).json({
+        success: true,
         gateway: 'midtrans',
+        db_status: dbStatus,
         order_id: body.order_id,
         tenant_id: tenantId,
         tenant_code: tenantCode,
@@ -354,9 +473,16 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('[Unified Payment Error]:', err.message);
     return res.status(500).json({
-      error: 'Payment processing failed',
-      gateway: activeGateway,
-      details: err.message
+      success: false,
+      stage: 'server_exception',
+      error: 'Terjadi kesalahan sistem saat memproses pembayaran',
+      analysis: err.message,
+      recommendation: 'Periksa log serverless Vercel atau hubungi pengembang untuk analisis lebih mendalam.',
+      technical_details: {
+        exception: err.message,
+        gateway: activeGateway,
+        timestamp: new Date().toISOString()
+      }
     });
   }
 }
