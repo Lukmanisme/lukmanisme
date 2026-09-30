@@ -615,12 +615,37 @@
       }
     }
 
+    function setFieldBlocked(inputElem, isBlocked, value = null) {
+      if (!inputElem) return;
+      if (value !== null && value !== undefined && value !== '') {
+        inputElem.value = value;
+      }
+      if (isBlocked) {
+        inputElem.readOnly = true;
+        inputElem.classList.remove('bg-slate-900', 'border-slate-700', 'text-white', 'focus:border-emerald-500');
+        inputElem.classList.add('bg-slate-800/80', 'border-slate-700/60', 'text-slate-300', 'cursor-not-allowed', 'opacity-90');
+        inputElem.title = 'Data toko terkunci otomatis dari akun kasir Anda di database Supabase';
+      } else {
+        inputElem.readOnly = false;
+        inputElem.classList.remove('bg-slate-800/80', 'border-slate-700/60', 'text-slate-300', 'cursor-not-allowed', 'opacity-90');
+        inputElem.classList.add('bg-slate-900', 'border-slate-700', 'text-white', 'focus:border-emerald-500');
+        inputElem.title = '';
+      }
+    }
+
     async function checkEmailRegistered(email) {
+      const storeInput = document.getElementById('cust-store');
+      const phoneInput = document.getElementById('cust-phone');
+      const tenantInput = document.getElementById('cust-tenant');
+
       if (!email || !email.includes('@') || email.length < 5) {
         document.getElementById('email-status-container')?.classList.add('hidden');
         document.getElementById('password-field-container')?.classList.remove('hidden');
         isExistingAccount = false;
         resolvedTenantId = '';
+        setFieldBlocked(storeInput, false);
+        setFieldBlocked(phoneInput, false);
+        setFieldBlocked(tenantInput, false);
         return;
       }
 
@@ -651,14 +676,15 @@
             badge.innerHTML = `<span>✓</span> <span>Akun Kasir Terdaftar &bull; Perpanjangan Langganan</span>`;
           }
 
-          if (data.store_name && document.getElementById('cust-store')) {
-            document.getElementById('cust-store').value = data.store_name;
+          // Kunci (block) input yang sudah ada datanya di Supabase
+          if (data.store_name) {
+            setFieldBlocked(storeInput, true, data.store_name);
           }
-          if (data.tenant_code && document.getElementById('cust-tenant')) {
-            document.getElementById('cust-tenant').value = data.tenant_code;
+          if (data.tenant_code) {
+            setFieldBlocked(tenantInput, true, data.tenant_code);
           }
-          if (data.phone && document.getElementById('cust-phone') && !document.getElementById('cust-phone').value) {
-            document.getElementById('cust-phone').value = data.phone;
+          if (data.phone) {
+            setFieldBlocked(phoneInput, true, data.phone);
           }
 
           if (helper) {
@@ -674,6 +700,11 @@
 
           // Tampilkan field password untuk akun baru
           if (pwdContainer) pwdContainer.classList.remove('hidden');
+
+          // Buka kembali (unblock) input agar pengguna bisa mengisi data baru
+          setFieldBlocked(storeInput, false);
+          setFieldBlocked(phoneInput, false);
+          setFieldBlocked(tenantInput, false);
 
           if (badge) {
             badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30';
