@@ -101,15 +101,16 @@
 
         <!-- Paket 1: Free Trial 3 Hari -->
         <div class="plan-card bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-2xl p-5 cursor-pointer transition flex items-start justify-between"
-             onclick="selectPlan('trial', 0, 3, 'Uji Coba Gratis 3 Hari')">
+             id="card-plan-trial"
+             onclick="selectPlan('trial', 0, packageConfig['trial']?.days || 3, packageConfig['trial']?.label || 'Uji Coba Gratis 3 Hari')">
           <div class="flex items-start gap-4">
             <input type="radio" name="plan_choice" id="plan_trial" class="mt-1 accent-emerald-500 w-4 h-4 cursor-pointer">
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="font-bold text-white text-base">Uji Coba Gratis 3 Hari</h3>
+                <h3 class="font-bold text-white text-base" id="label-plan-trial">Uji Coba Gratis 3 Hari</h3>
                 <span class="text-[10px] font-mono bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded font-semibold">TRIAL BARU</span>
               </div>
-              <p class="text-xs text-slate-400 mt-1">Akses penuh fitur kasir & manajemen stok 3 hari tanpa komitmen.</p>
+              <p class="text-xs text-slate-400 mt-1">Akses penuh fitur kasir & manajemen stok tanpa komitmen.</p>
               <ul class="text-[11px] text-slate-400 space-y-0.5 mt-2.5">
                 <li class="flex items-center gap-1.5"><span class="text-emerald-400 font-bold">&#10003;</span> Akses Full Fitur POS</li>
                 <li class="flex items-center gap-1.5"><span class="text-emerald-400 font-bold">&#10003;</span> Manajemen Stok & Menu</li>
@@ -118,18 +119,19 @@
           </div>
           <div class="text-right">
             <span class="text-lg font-extrabold text-white font-mono">Rp 0</span>
-            <span class="block text-[11px] text-slate-500">3 Hari</span>
+            <span class="block text-[11px] text-slate-500" id="duration-plan-trial">3 Hari</span>
           </div>
         </div>
 
         <!-- Paket 2: 1 Bulan (Default Selected) -->
         <div class="plan-card active bg-[#111827] border border-emerald-500/40 rounded-2xl p-5 cursor-pointer transition flex items-start justify-between"
-             onclick="selectPlan('1m', 30000, 30, 'Paket 1 Bulan (30 Hari)')">
+             id="card-plan-1m"
+             onclick="selectPlan('1m', packageConfig['1m']?.price || 30000, 30, packageConfig['1m']?.label || 'Paket 1 Bulan (30 Hari)')">
           <div class="flex items-start gap-4">
             <input type="radio" name="plan_choice" id="plan_1m" checked class="mt-1 accent-emerald-500 w-4 h-4 cursor-pointer">
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="font-bold text-white text-base">Paket 1 Bulan</h3>
+                <h3 class="font-bold text-white text-base" id="label-plan-1m">Paket 1 Bulan</h3>
                 <span class="text-[10px] font-mono bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-semibold">REGULER</span>
               </div>
               <p class="text-xs text-slate-400 mt-1">Akses penuh seluruh fitur POS operasional selama 30 hari.</p>
@@ -141,23 +143,24 @@
             </div>
           </div>
           <div class="text-right">
-            <span class="text-lg font-extrabold text-white font-mono">Rp 30.000</span>
-            <span class="block text-[11px] text-emerald-400 font-mono">Rp 1.000/hari</span>
+            <span class="text-lg font-extrabold text-white font-mono" id="price-plan-1m">Rp 30.000</span>
+            <span class="block text-[11px] text-emerald-400 font-mono" id="daily-plan-1m">Rp 1.000/hari</span>
           </div>
         </div>
 
         <!-- Paket 3: 3 Bulan (POPULAR) -->
         <div class="plan-card bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-2xl p-5 cursor-pointer transition flex items-start justify-between relative group"
-             onclick="selectPlan('3m', 75000, 90, 'Paket 3 Bulan (90 Hari)')">
+             id="card-plan-3m"
+             onclick="selectPlan('3m', packageConfig['3m']?.price || 75000, 90, packageConfig['3m']?.label || 'Paket 3 Bulan (90 Hari)')">
           <div class="absolute -top-3 right-6 bg-emerald-500 text-black font-mono font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow">
-            POPULAR &bull; Hemat Rp 15.000
+            POPULAR &bull; Lebih Hemat
           </div>
           <div class="flex items-start gap-4">
             <input type="radio" name="plan_choice" id="plan_3m" class="mt-1 accent-emerald-500 w-4 h-4 cursor-pointer">
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="font-bold text-white text-base">Paket 3 Bulan</h3>
-                <span class="text-[10px] font-mono bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-semibold">HEMAT 17%</span>
+                <h3 class="font-bold text-white text-base" id="label-plan-3m">Paket 3 Bulan</h3>
+                <span class="text-[10px] font-mono bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-semibold">HEMAT</span>
               </div>
               <p class="text-xs text-slate-400 mt-1">Operasional tenang selama satu kuartal tanpa sering perpanjang.</p>
               <ul class="text-[11px] text-slate-400 space-y-0.5 mt-2.5">
@@ -167,24 +170,24 @@
             </div>
           </div>
           <div class="text-right">
-            <span class="text-lg font-extrabold text-white font-mono">Rp 75.000</span>
-            <span class="block text-[11px] text-slate-500 line-through">Rp 90.000</span>
-            <span class="block text-[11px] text-emerald-400 font-mono">Rp 833/hari</span>
+            <span class="text-lg font-extrabold text-white font-mono" id="price-plan-3m">Rp 75.000</span>
+            <span class="block text-[11px] text-emerald-400 font-mono" id="daily-plan-3m">Rp 833/hari</span>
           </div>
         </div>
 
         <!-- Paket 4: 12 Bulan (TERBAIK) -->
         <div class="plan-card bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-2xl p-5 cursor-pointer transition flex items-start justify-between relative group"
-             onclick="selectPlan('12m', 250000, 365, 'Paket 12 Bulan (365 Hari)')">
+             id="card-plan-12m"
+             onclick="selectPlan('12m', packageConfig['12m']?.price || 250000, 365, packageConfig['12m']?.label || 'Paket 12 Bulan (365 Hari)')">
           <div class="absolute -top-3 right-6 bg-gradient-to-r from-teal-400 to-emerald-400 text-black font-mono font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow">
-            TERBAIK &bull; Hemat Rp 110.000
+            TERBAIK &bull; Paling Hemat
           </div>
           <div class="flex items-start gap-4">
             <input type="radio" name="plan_choice" id="plan_12m" class="mt-1 accent-emerald-500 w-4 h-4 cursor-pointer">
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="font-bold text-white text-base">Paket 12 Bulan (1 Tahun)</h3>
-                <span class="text-[10px] font-mono bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded font-semibold">HEMAT 30%</span>
+                <h3 class="font-bold text-white text-base" id="label-plan-12m">Paket 12 Bulan (1 Tahun)</h3>
+                <span class="text-[10px] font-mono bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded font-semibold">EKONOMIS</span>
               </div>
               <p class="text-xs text-slate-400 mt-1">Pilihan cerdas dan paling ekonomis untuk warung yang sudah stabil.</p>
               <ul class="text-[11px] text-slate-400 space-y-0.5 mt-2.5">
@@ -194,9 +197,8 @@
             </div>
           </div>
           <div class="text-right">
-            <span class="text-lg font-extrabold text-white font-mono">Rp 250.000</span>
-            <span class="block text-[11px] text-slate-500 line-through">Rp 360.000</span>
-            <span class="block text-[11px] text-emerald-400 font-mono">Rp 685/hari</span>
+            <span class="text-lg font-extrabold text-white font-mono" id="price-plan-12m">Rp 250.000</span>
+            <span class="block text-[11px] text-emerald-400 font-mono" id="daily-plan-12m">Rp 685/hari</span>
           </div>
         </div>
 
@@ -531,11 +533,69 @@
 
   <!-- SCRIPT LOGIC -->
   <script>
+    // Dynamic Packages State (loaded from Supabase app_config with safe defaults)
+    let packageConfig = {
+      trial: { price: 0, days: 3, label: 'Uji Coba Gratis 3 Hari' },
+      '1m': { price: 30000, days: 30, label: 'Paket 1 Bulan (30 Hari)' },
+      '3m': { price: 75000, days: 90, label: 'Paket 3 Bulan (90 Hari)' },
+      '12m': { price: 250000, days: 365, label: 'Paket 12 Bulan (365 Hari)' }
+    };
+
     let currentPlan = '1m';
     let currentAmount = 30000;
     let currentDays = 30;
     let currentPlanName = 'Paket 1 Bulan (30 Hari)';
     let generatedOrderId = '';
+
+    // Fetch dynamic packages and trial days from Supabase app_config (managed via Superadmin APK)
+    async function loadDynamicPackages() {
+      try {
+        const res = await fetch('/api/config/packages');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.success && json.data) {
+          const { trial_days, packages } = json.data;
+
+          if (trial_days) {
+            packageConfig.trial.days = trial_days;
+            packageConfig.trial.label = `Uji Coba Gratis ${trial_days} Hari`;
+            const durationEl = document.getElementById('duration-plan-trial');
+            const labelEl = document.getElementById('label-plan-trial');
+            if (durationEl) durationEl.innerText = `${trial_days} Hari`;
+            if (labelEl) labelEl.innerText = `Uji Coba Gratis ${trial_days} Hari`;
+          }
+
+          if (packages) {
+            ['1m', '3m', '12m'].forEach(key => {
+              if (packages[key] && typeof packages[key].price === 'number') {
+                const pkg = packages[key];
+                packageConfig[key].price = pkg.price;
+                if (pkg.label) packageConfig[key].label = pkg.label;
+
+                const priceEl = document.getElementById(`price-plan-${key}`);
+                const dailyEl = document.getElementById(`daily-plan-${key}`);
+                const labelEl = document.getElementById(`label-plan-${key}`);
+
+                if (priceEl) priceEl.innerText = `Rp ${pkg.price.toLocaleString('id-ID')}`;
+                if (dailyEl && packageConfig[key].days) {
+                  const daily = Math.round(pkg.price / packageConfig[key].days);
+                  dailyEl.innerText = `Rp ${daily.toLocaleString('id-ID')}/hari`;
+                }
+                if (labelEl && pkg.label) labelEl.innerText = pkg.label;
+              }
+            });
+          }
+
+          // Re-render currently selected plan with new prices
+          if (packageConfig[currentPlan]) {
+            const p = packageConfig[currentPlan];
+            selectPlan(currentPlan, p.price, p.days, p.label);
+          }
+        }
+      } catch (err) {
+        console.warn('Using default package configuration:', err.message);
+      }
+    }
 
     // Generate unique order ID on load
     function generateOrderId() {
@@ -556,11 +616,9 @@
       if (tenant) document.getElementById('cust-tenant').value = tenant;
       if (phone) document.getElementById('cust-phone').value = phone;
 
-      if (plan) {
-        if (plan === 'trial') selectPlan('trial', 0, 3, 'Uji Coba Gratis 3 Hari');
-        else if (plan === '1m') selectPlan('1m', 30000, 30, 'Paket 1 Bulan (30 Hari)');
-        else if (plan === '3m') selectPlan('3m', 75000, 90, 'Paket 3 Bulan (90 Hari)');
-        else if (plan === '12m') selectPlan('12m', 250000, 365, 'Paket 12 Bulan (365 Hari)');
+      if (plan && packageConfig[plan]) {
+        const p = packageConfig[plan];
+        selectPlan(plan, p.price, p.days, p.label);
       }
     }
 
@@ -939,6 +997,7 @@
       generatedOrderId = generateOrderId();
       document.getElementById('summary-order-id').innerText = generatedOrderId;
       parseUrlParams();
+      loadDynamicPackages();
 
       // Attach realtime debounce listener for email input
       const emailInput = document.getElementById('cust-email');
