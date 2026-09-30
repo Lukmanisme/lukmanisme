@@ -316,7 +316,7 @@
             </div>
             <div class="flex justify-between items-center">
               <span class="text-slate-400">No. Pesanan:</span>
-              <span id="summary-order-id" class="font-mono text-emerald-400">ORDER-BLJ-...</span>
+              <span id="summary-order-id" class="font-mono text-slate-500 text-[11px] italic">Dibuat saat klik Bayar</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-slate-400">Durasi:</span>
@@ -659,11 +659,15 @@
       }
     }
 
-    // Generate unique order ID on load
+    // Generate high-entropy unique order ID (Timestamp YYMMDD-HHMMSS + 4-digit random)
     function generateOrderId() {
-      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const now = new Date();
+      const dateStr = now.toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
+      const timeStr = String(now.getHours()).padStart(2, '0') +
+                      String(now.getMinutes()).padStart(2, '0') +
+                      String(now.getSeconds()).padStart(2, '0');
       const rand = Math.floor(1000 + Math.random() * 9000);
-      return `ORDER-BLJ-${today}-${rand}`;
+      return `BLJ-${dateStr}-${timeStr}-${rand}`;
     }
 
     // Read URL Parameters (when redirected from Android APK)
@@ -949,6 +953,12 @@
         const raw = sessionStorage.getItem('balanjo_pending_qris');
         if (!raw) return;
         const data = JSON.parse(raw);
+        generatedOrderId = data.order_id;
+        const summaryOrderIdEl = document.getElementById('summary-order-id');
+        if (summaryOrderIdEl) {
+          summaryOrderIdEl.innerText = data.order_id;
+          summaryOrderIdEl.className = 'font-mono text-emerald-400 font-semibold';
+        }
         openQrisModal(data.qris_text, data.amount, data.order_id, data.invoice_id, data.tx_id, data.expires_at, false);
       } catch (e) {
         console.warn('Resume pending QR error:', e);
@@ -958,6 +968,12 @@
     function dismissPendingQris() {
       sessionStorage.removeItem('balanjo_pending_qris');
       document.getElementById('pending-qr-banner')?.classList.add('hidden');
+      generatedOrderId = '';
+      const summaryOrderIdEl = document.getElementById('summary-order-id');
+      if (summaryOrderIdEl) {
+        summaryOrderIdEl.innerHTML = '<span class="text-slate-500 text-[11px] italic">Dibuat saat klik Bayar</span>';
+        summaryOrderIdEl.className = 'font-mono text-slate-500 text-[11px] italic';
+      }
     }
 
     function togglePasswordVisibility() {
@@ -1181,6 +1197,16 @@
         return;
       }
 
+      // Generate order ID on-demand saat pengguna klik Bayar
+      if (!generatedOrderId) {
+        generatedOrderId = generateOrderId();
+        const summaryOrderIdEl = document.getElementById('summary-order-id');
+        if (summaryOrderIdEl) {
+          summaryOrderIdEl.innerText = generatedOrderId;
+          summaryOrderIdEl.className = 'font-mono text-emerald-400 font-semibold';
+        }
+      }
+
       btn.disabled = true;
       btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></span> Mendaftarkan & Menyiapkan Pembayaran...`;
 
@@ -1368,14 +1394,16 @@
 
     function closeSuccessModal() {
       document.getElementById('success-modal').classList.add('hidden');
-      generatedOrderId = generateOrderId();
-      document.getElementById('summary-order-id').innerText = generatedOrderId;
+      generatedOrderId = '';
+      const summaryOrderIdEl = document.getElementById('summary-order-id');
+      if (summaryOrderIdEl) {
+        summaryOrderIdEl.innerHTML = '<span class="text-slate-500 text-[11px] italic">Dibuat saat klik Bayar</span>';
+        summaryOrderIdEl.className = 'font-mono text-slate-500 text-[11px] italic';
+      }
     }
 
     // Init
     window.addEventListener('DOMContentLoaded', () => {
-      generatedOrderId = generateOrderId();
-      document.getElementById('summary-order-id').innerText = generatedOrderId;
       parseUrlParams();
       loadDynamicPackages();
       checkPendingQrisSession();

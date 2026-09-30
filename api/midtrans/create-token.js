@@ -56,11 +56,14 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generate unique order ID format: ORDER-BLJ-YYYYMMDD-XXXX
+    // Generate unique order ID format: BLJ-YYMMDD-HHMMSS-XXXX
     const now = new Date();
-    const ymd = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const dateStr = now.toISOString().slice(2, 10).replace(/-/g, '');
+    const timeStr = String(now.getHours()).padStart(2, '0') +
+                    String(now.getMinutes()).padStart(2, '0') +
+                    String(now.getSeconds()).padStart(2, '0');
     const rand = Math.floor(1000 + Math.random() * 9000);
-    const orderId = req.body.order_id || `ORDER-BLJ-${ymd}-${rand}`;
+    const orderId = req.body.order_id || `BLJ-${dateStr}-${timeStr}-${rand}`;
 
     const snapEndpoint = isProduction
       ? 'https://app.midtrans.com/snap/v1/transactions'

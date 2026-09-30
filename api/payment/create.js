@@ -319,6 +319,15 @@ export default async function handler(req, res) {
   const activeGateway = await resolveActiveGateway();
   const body = req.body || {};
 
+  // High-entropy unique order ID generator fallback
+  const now = new Date();
+  const dateStr = now.toISOString().slice(2, 10).replace(/-/g, '');
+  const timeStr = String(now.getHours()).padStart(2, '0') +
+                  String(now.getMinutes()).padStart(2, '0') +
+                  String(now.getSeconds()).padStart(2, '0');
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  const orderId = (body.order_id && String(body.order_id).trim()) || `BLJ-${dateStr}-${timeStr}-${rand}`;
+
   if (activeGateway === 'manual') {
     return res.status(400).json({
       success: false,
@@ -389,7 +398,7 @@ export default async function handler(req, res) {
       phone: body.customer_phone,
       customTenantCode: body.tenant_code,
       existingTenantId: body.tenant_id,
-      orderId: body.order_id,
+      orderId: orderId,
       plan: body.plan,
       amount: finalAmount,
       gateway: activeGateway
@@ -412,7 +421,7 @@ export default async function handler(req, res) {
     // 2. Delegate to active payment gateway
     if (activeGateway === 'xoftware') {
       const response = await createXoftwareTransaction({
-        orderId: body.order_id,
+        orderId: orderId,
         amount: finalAmount,
         storeName: body.store_name,
         customerEmail: body.customer_email,
@@ -428,7 +437,7 @@ export default async function handler(req, res) {
         success: true,
         gateway: 'xoftware',
         db_status: dbStatus,
-        order_id: body.order_id,
+        order_id: orderId,
         tenant_id: tenantId,
         tenant_code: tenantCode,
         qris_text: trxData.qris_text || '',
@@ -451,7 +460,7 @@ export default async function handler(req, res) {
           db_status: dbStatus,
           tenant_id: tenantId,
           tenant_code: tenantCode,
-          order_id: body.order_id
+          order_id: orderId
         });
       }
 
@@ -464,7 +473,7 @@ export default async function handler(req, res) {
 
       const midtransPayload = {
         transaction_details: {
-          order_id: body.order_id,
+          order_id: orderId,
           gross_amount: Math.round(Number(body.amount))
         },
         item_details: [
@@ -510,7 +519,7 @@ export default async function handler(req, res) {
           technical_details: {
             http_status: mRes.status,
             midtrans_response: mData,
-            order_id: body.order_id
+            order_id: orderId
           }
         });
       }
@@ -519,7 +528,7 @@ export default async function handler(req, res) {
         success: true,
         gateway: 'midtrans',
         db_status: dbStatus,
-        order_id: body.order_id,
+        order_id: orderId,
         tenant_id: tenantId,
         tenant_code: tenantCode,
         token: mData.token || null,
